@@ -4,7 +4,15 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "src/**",
+      "tests/**",
+      "coverage/**",
+      "package.json",
+      "package-lock.json",
+      "tsconfig.json",
+      "vitest.config.ts",
+      "*.md"
     ],
     "rewrites": [
       {
