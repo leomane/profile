@@ -1,0 +1,3199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Chatelier's Principle - Interactive Chemistry</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0c0a;
+            --bg-elevated: #1a1816;
+            --bg-card: #141311;
+            --text: #e8e4dc;
+            --text-dim: #6a6560;
+            --text-muted: #4a4845;
+            --border: #2a2825;
+            --accent: #c4a35a;
+            --teal: #5a8a87;
+            --coral: #b87a6a;
+            --lavender: #8a7a9a;
+            --success: #788c5d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 420px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(100vh - 40px);
+            
+            /* Discrete scrollbar */
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        /* Webkit browsers (Chrome, Safari, Edge) */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Hide scrollbar until hover (optional - uncomment for even more discrete) */
+        /*
+        .sidebar::-webkit-scrollbar-thumb {
+            background: transparent;
+        }
+        .sidebar:hover::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+        */
+
+        .sidebar-header {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Accordion Styles */
+        .accordion-section {
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-elevated);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: var(--bg-elevated);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .accordion-header:hover {
+            background: var(--bg-card);
+        }
+
+        .accordion-header h3 {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .accordion-header h3::before {
+            content: '';
+        }
+
+        .accordion-icon {
+            font-size: 12px;
+            color: var(--text-dim);
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-section.open .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .accordion-section.open .accordion-content {
+            max-height: 1500px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .accordion-body {
+            padding: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sidebar-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .sidebar-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar .subtitle {
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+
+        .reaction-display {
+            background: var(--bg);
+            padding: 14px;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            border: 1px solid var(--border);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .reaction-display .equation {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .reaction-display .info {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 8px;
+        }
+
+        .equilibrium-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .equilibrium-indicator .arrow {
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .equilibrium-indicator .arrow.left {
+            color: var(--teal);
+        }
+
+        .equilibrium-indicator .arrow.right {
+            color: var(--coral);
+        }
+
+        .equilibrium-indicator .status {
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .particle-counts-container {
+            margin: 10px 0;
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .particle-totals {
+            display: flex;
+            justify-content: space-around;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+
+        .particle-counts {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px 0;
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .particle-count-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .particle-count-item .particle-label {
+            font-family: 'Space Mono', monospace;
+            font-weight: 500;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .particle-count-item.reactant .particle-label {
+            color: var(--teal);
+        }
+
+        .particle-count-item.product .particle-label {
+            color: var(--coral);
+        }
+
+        .particle-count-item .particle-number {
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .particle-count-item.reactant .particle-number {
+            color: var(--teal);
+        }
+
+        .particle-count-item.product .particle-number {
+            color: var(--coral);
+        }
+
+        .molecule-breakdown {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .molecule-breakdown .molecule-count-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+
+        .molecule-breakdown .molecule-count-chip .mol-formula {
+            font-weight: 600;
+        }
+
+        .molecule-breakdown .molecule-count-chip .mol-count {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .specific-molecules-section {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .specific-molecules-section h4 {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .molecules-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .molecule-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            background: var(--bg);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .molecule-row.reactant-row {
+            border-left: 3px solid var(--teal);
+        }
+
+        .molecule-row.product-row {
+            border-left: 3px solid var(--coral);
+        }
+
+        .molecule-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .molecule-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .molecule-btn.add {
+            background: var(--teal);
+            color: var(--bg);
+        }
+
+        .molecule-btn.add:hover {
+            background: #6a9a97;
+            transform: scale(1.1);
+        }
+
+        .molecule-btn.remove {
+            background: var(--coral);
+            color: var(--bg);
+        }
+
+        .molecule-btn.remove:hover {
+            background: #c88a7a;
+            transform: scale(1.1);
+        }
+
+        .molecule-count {
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            color: var(--text-dim);
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .button.primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .button.primary:hover {
+            background: #d4b36a;
+            transform: translateY(-1px);
+        }
+
+        .button.secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .button.secondary:hover {
+            background: #3a3835;
+        }
+
+        .button.reactant {
+            background: var(--teal);
+            color: var(--bg);
+        }
+
+        .button.reactant:hover {
+            background: #6a9a97;
+        }
+
+        .button.product {
+            background: var(--coral);
+            color: var(--bg);
+        }
+
+        .button.product:hover {
+            background: #c88a7a;
+        }
+
+        .button.heat {
+            background: var(--coral);
+            color: var(--bg);
+        }
+
+        .button.heat:hover {
+            background: #c88a7a;
+        }
+
+        .button.cool {
+            background: var(--teal);
+            color: var(--bg);
+        }
+
+        .button.cool:hover {
+            background: #6a9a97;
+        }
+
+        .button.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: #d4b36a;
+        }
+
+        .value-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .temp-range-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            padding: 0 2px;
+        }
+
+        .slider-range-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            padding: 0 2px;
+        }
+
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas-container {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .loading {
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .concentration-bars {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .conc-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .conc-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .conc-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        .message-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text);
+        }
+
+        .message-box strong {
+            color: var(--accent);
+        }
+
+        .eq-constants {
+            background: var(--bg);
+            padding: 14px;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            line-height: 1.8;
+        }
+
+        .eq-constants .expression {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            color: var(--text);
+        }
+
+        .eq-constants .values {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .eq-constants .value-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .eq-constants .label {
+            font-weight: 500;
+        }
+
+        .eq-constants .number {
+            color: var(--text-dim);
+        }
+
+        .eq-constants h4 {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dim);
+            margin: 10px 0 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .eq-constants h4:first-child {
+            margin-top: 0;
+        }
+
+        .molecule-colored {
+            font-weight: 600;
+            padding: 1px 4px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .thermo-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .thermo-indicator .thermo-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .thermo-indicator.exothermic {
+            background: rgba(184, 122, 106, 0.15);
+            border: 1px solid rgba(184, 122, 106, 0.3);
+            color: var(--coral);
+        }
+
+        .thermo-indicator.endothermic {
+            background: rgba(90, 138, 135, 0.15);
+            border: 1px solid rgba(90, 138, 135, 0.3);
+            color: var(--teal);
+        }
+
+        .thermo-indicator .icon {
+            font-size: 18px;
+        }
+
+        .thermo-indicator .delta-h {
+            font-family: 'Space Mono', monospace;
+            font-weight: 600;
+        }
+
+        .volume-pressure-display {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .vp-item {
+            flex: 1;
+            background: var(--bg);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .vp-label {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 4px;
+        }
+
+        .vp-value {
+            display: block;
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .volume-note {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 10px;
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            line-height: 1.4;
+            border: 1px solid var(--border);
+        }
+
+        .q-k-comparison {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .q-k-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .q-k-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
+        }
+
+        .q-k-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .q-k-comparator {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            min-width: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .q-k-comparator.forward {
+            color: var(--coral);
+        }
+
+        .q-k-comparator.reverse {
+            color: var(--teal);
+        }
+
+        .q-k-comparator.equilibrium {
+            color: var(--accent);
+        }
+
+        .q-k-status {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-top: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .q-k-status.forward {
+            background: rgba(184, 122, 106, 0.15);
+            color: var(--coral);
+        }
+
+        .q-k-status.reverse {
+            background: rgba(90, 138, 135, 0.15);
+            color: var(--teal);
+        }
+
+        .q-k-status.equilibrium {
+            background: rgba(196, 163, 90, 0.15);
+            color: var(--accent);
+        }
+
+        .kp-value-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            padding: 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            margin: 8px 0;
+            border: 1px solid var(--border);
+        }
+
+        .kp-value-display span:first-child {
+            font-weight: 600;
+            color: var(--text-dim);
+        }
+
+        #kp-calculated-value {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .kp-relation {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            color: var(--text-dim);
+            padding: 6px 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            margin: 6px 0;
+            border: 1px solid var(--border);
+        }
+
+        .q-k-raw-values {
+            display: flex;
+            justify-content: space-around;
+            font-size: 11px;
+            color: var(--text-dim);
+            padding: 4px 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            margin-top: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .q-k-raw-values span {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .vant-hoff-info {
+            font-size: 10px;
+            color: var(--text-dim);
+            padding: 6px 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            margin-top: 6px;
+            line-height: 1.4;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .vant-hoff-info .formula {
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--lavender);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           RESPONSIVE STYLES
+           ═══════════════════════════════════════════════════════════════════════ */
+        
+        /* Tablet and smaller */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: none;
+                overflow-y: visible;
+                order: 2;
+            }
+
+            .canvas-area {
+                order: 1;
+                width: 100%;
+            }
+
+            #canvas-container {
+                width: 100% !important;
+            }
+        }
+
+        /* Mobile phones */
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .sidebar {
+                padding: 12px;
+            }
+
+            .sidebar h1 {
+                font-size: 18px;
+            }
+
+            .sidebar .subtitle {
+                font-size: 12px;
+            }
+
+            .sidebar-header {
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+            }
+
+            .accordion-section {
+                margin-bottom: 6px;
+            }
+
+            .accordion-header {
+                padding: 10px 12px;
+            }
+
+            .accordion-header h3 {
+                font-size: 12px;
+            }
+
+            .accordion-body {
+                padding: 12px;
+            }
+
+            .button-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+
+            .button {
+                padding: 12px 10px;
+                font-size: 11px;
+                min-height: 44px; /* Touch-friendly target size */
+            }
+
+            .molecule-btn {
+                width: 36px;
+                height: 36px;
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            .molecule-row {
+                padding: 8px 10px;
+            }
+
+            .molecule-name {
+                font-size: 12px;
+            }
+
+            .slider-container input[type="range"] {
+                height: 8px;
+            }
+
+            .slider-container input[type="range"]::-webkit-slider-thumb {
+                width: 24px;
+                height: 24px;
+            }
+
+            .reaction-display {
+                padding: 10px;
+                font-size: 12px;
+            }
+
+            .reaction-display .equation {
+                font-size: 13px;
+            }
+
+            .equilibrium-indicator {
+                padding: 8px;
+                gap: 6px;
+            }
+
+            .particle-count-item .particle-number {
+                font-size: 18px;
+            }
+
+            .particle-count-item .particle-label {
+                font-size: 9px;
+            }
+
+            .eq-constants {
+                padding: 10px;
+                font-size: 11px;
+            }
+
+            .volume-pressure-display {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .vp-item {
+                padding: 8px;
+            }
+
+            .vp-value {
+                font-size: 14px;
+            }
+
+            .q-k-comparison {
+                flex-direction: column;
+                gap: 8px;
+                padding: 10px;
+            }
+
+            .q-k-value {
+                font-size: 16px;
+            }
+
+            .q-k-comparator {
+                font-size: 20px;
+            }
+
+            .message-box {
+                padding: 10px;
+                font-size: 11px;
+            }
+
+            .legend {
+                gap: 8px;
+                padding: 10px;
+            }
+
+            .legend-item {
+                font-size: 10px;
+            }
+
+            .thermo-indicator {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .specific-molecules-section h4 {
+                font-size: 11px;
+            }
+
+            .control-group label {
+                font-size: 11px;
+            }
+
+            .value-display {
+                font-size: 10px;
+            }
+        }
+
+        /* Small phones */
+        @media (max-width: 480px) {
+            .container {
+                padding: 6px;
+            }
+
+            .sidebar {
+                padding: 10px;
+                border-radius: 8px;
+            }
+
+            .sidebar h1 {
+                font-size: 16px;
+            }
+
+            .button-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button.full-width {
+                grid-column: 1;
+            }
+
+            .particle-totals {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .molecule-breakdown {
+                gap: 4px;
+            }
+
+            .molecule-breakdown .molecule-count-chip {
+                padding: 2px 6px;
+                font-size: 11px;
+            }
+
+            .q-k-item {
+                width: 100%;
+            }
+
+            .sidebar-columns {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+
+        /* Landscape orientation on mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .container {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .canvas-area {
+                flex: 1 1 50%;
+                min-width: 300px;
+            }
+
+            .sidebar {
+                flex: 1 1 45%;
+                min-width: 280px;
+                max-height: calc(100vh - 24px);
+                overflow-y: auto;
+            }
+        }
+
+        /* Ensure touch targets are adequate */
+        @media (pointer: coarse) {
+            .button {
+                min-height: 44px;
+            }
+
+            .molecule-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            .accordion-header {
+                min-height: 48px;
+            }
+
+            .slider-container input[type="range"]::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+            }
+
+            .slider-container input[type="range"]::-moz-range-thumb {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" style="position: fixed; top: 20px; right: 20px; z-index: 1000; font-family: 'Space Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; padding: 8px 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 6px; transition: all 0.3s ease;">← Back to Portfolio</a>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Le Chatelier's Principle</h1>
+                <p class="subtitle">Disturb an equilibrium system and watch it shift to counteract the change</p>
+            </div>
+
+            <!-- CURRENT REACTION -->
+            <div class="accordion-section open" id="section-reaction">
+                <div class="accordion-header" onclick="toggleAccordion('reaction')">
+                    <h3>⚗️ Current Reaction</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="reaction-display">
+                            <div class="equation" id="reaction-equation">Loading...</div>
+                            <div class="info" id="reaction-info"></div>
+                            <div class="thermo-indicator" id="thermo-indicator">
+                                <div class="thermo-top">
+                                    <span class="icon">🔥</span>
+                                    <span class="text">Exothermic</span>
+                                </div>
+                                <span class="delta-h">ΔH = -92 kJ/mol</span>
+                            </div>
+                        </div>
+                        <button class="button primary full-width" style="margin-top: 12px;" onclick="generateNewReaction()">🔄 Generate New Reaction</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EQUILIBRIUM STATUS -->
+            <div class="accordion-section open" id="section-status">
+                <div class="accordion-header" onclick="toggleAccordion('status')">
+                    <h3>⚖️ Equilibrium Status</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="equilibrium-indicator">
+                            <span class="arrow left" id="arrow-left">◄◄</span>
+                            <span class="status" id="eq-status">At Equilibrium</span>
+                            <span class="arrow right" id="arrow-right">►►</span>
+                        </div>
+                        <div class="particle-counts-container">
+                            <div class="particle-totals">
+                                <div class="particle-count-item reactant">
+                                    <span class="particle-label">Reactants:</span>
+                                    <span class="particle-number" id="reactant-count">0</span>
+                                </div>
+                                <div class="particle-count-item product">
+                                    <span class="particle-label">Products:</span>
+                                    <span class="particle-number" id="product-count">0</span>
+                                </div>
+                            </div>
+                            <div class="molecule-breakdown" id="molecule-breakdown">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODIFY CONCENTRATIONS -->
+            <div class="accordion-section open" id="section-concentrations">
+                <div class="accordion-header" onclick="toggleAccordion('concentrations')">
+                    <h3>🧪 Modify Concentrations</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="molecules-grid" id="specific-molecules-grid">
+                            <!-- Populated dynamically by updateSpecificMoleculeButtons() -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EQUILIBRIUM CONSTANTS -->
+            <div class="accordion-section open" id="section-constants">
+                <div class="accordion-header" onclick="toggleAccordion('constants')">
+                    <h3>📊 Equilibrium Constants</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="eq-constants" id="eq-constants">
+                            <div id="q-vs-k-section">
+                                <h4>Q vs K</h4>
+                                <div class="q-k-comparison">
+                                    <div class="q-k-item">
+                                        <span class="q-k-label">log₁₀(Q)</span>
+                                        <span class="q-k-value" id="logq-value">0.00</span>
+                                    </div>
+                                    <div class="q-k-comparator" id="q-k-comparator">=</div>
+                                    <div class="q-k-item">
+                                        <span class="q-k-label">log₁₀(K)</span>
+                                        <span class="q-k-value" id="logk-value">0.00</span>
+                                    </div>
+                                </div>
+                                <div class="q-k-raw-values">
+                                    <span>Q = <span id="qc-value">1.00</span></span>
+                                    <span>K = <span id="kc-value">1.00</span></span>
+                                </div>
+                                <div class="q-k-status" id="q-k-status">At Equilibrium (Q = K)</div>
+                                <div class="vant-hoff-info" id="vant-hoff-info"></div>
+                            </div>
+                            <div id="kc-section">
+                                <h4>K<sub>c</sub> Expression</h4>
+                                <div class="expression" id="kc-expression">Kc = ...</div>
+                                <div class="values" id="kc-values"></div>
+                            </div>
+                            <div id="kp-section">
+                                <h4>K<sub>p</sub> Expression</h4>
+                                <div class="expression" id="kp-expression">Kp = ...</div>
+                                <div class="kp-value-display">
+                                    <span>K<sub>p</sub> = </span>
+                                    <span id="kp-calculated-value">1.000</span>
+                                </div>
+                                <div class="kp-relation" id="kp-relation"></div>
+                                <div class="values" id="kp-values"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEMPERATURE -->
+            <div class="accordion-section" id="section-temperature">
+                <div class="accordion-header" onclick="toggleAccordion('temperature')">
+                    <h3>🌡️ Temperature</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="control-group">
+                            <label>Temperature: <span id="temp-value">298</span> K</label>
+                            <div class="slider-container">
+                                <input type="range" id="temperature" min="1" max="800" value="298" oninput="updateTemperature(this.value)">
+                            </div>
+                            <div class="temp-range-display">
+                                <span id="temp-min-label">1 K</span>
+                                <span id="temp-max-label">800 K</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VOLUME & PRESSURE -->
+            <div class="accordion-section" id="section-volume">
+                <div class="accordion-header" onclick="toggleAccordion('volume')">
+                    <h3>📦 Volume & Pressure</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="volume-pressure-display">
+                            <div class="vp-item">
+                                <span class="vp-label">Volume</span>
+                                <span class="vp-value" id="volume-display">1.00 L</span>
+                            </div>
+                            <div class="vp-item">
+                                <span class="vp-label">Pressure</span>
+                                <span class="vp-value" id="pressure-display">1.00 atm</span>
+                            </div>
+                        </div>
+                        <div class="control-group" style="margin-top: 8px;">
+                            <div class="slider-container">
+                                <input type="range" id="volume" min="-3" max="3" step="0.01" value="0" oninput="updateVolumeLog(this.value)">
+                                <span class="value-display" id="volume-value">1.00 L</span>
+                            </div>
+                            <div class="slider-range-display">
+                                <span>0.001 L</span>
+                                <span>1000 L</span>
+                            </div>
+                        </div>
+                        <div class="volume-note" id="volume-note">
+                            <em>P ∝ 1/V (Boyle's Law)</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIMULATION CONTROLS -->
+            <div class="accordion-section" id="section-simulation">
+                <div class="accordion-header" onclick="toggleAccordion('simulation')">
+                    <h3>⚙️ Simulation</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="control-group">
+                            <label>Reaction Speed</label>
+                            <div class="slider-container">
+                                <input type="range" id="speed" min="0.2" max="5" step="0.1" value="1" oninput="updateSpeed(this.value)">
+                                <span class="value-display" id="speed-value">1.0x</span>
+                            </div>
+                        </div>
+                        <button class="button secondary full-width" onclick="resetEquilibrium()">⟳ Reset to Equilibrium</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPLANATION -->
+            <div class="accordion-section open" id="section-explanation">
+                <div class="accordion-header" onclick="toggleAccordion('explanation')">
+                    <h3>💡 What's Happening?</h3>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div class="accordion-content">
+                    <div class="accordion-body">
+                        <div class="message-box" id="explanation">
+                            <strong>Le Chatelier's Principle:</strong> When a system at equilibrium is disturbed, it shifts to counteract the change and establish a new equilibrium.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">Initializing simulation...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // CHEMISTRY DATABASE - Valid Reversible Reactions
+        // ═══════════════════════════════════════════════════════════════════════
+
+        const reactions = [
+            {
+                name: "Haber Process",
+                reactants: [
+                    { formula: "N₂", coeff: 1, state: "g", color: "#4a90d9" },
+                    { formula: "H₂", coeff: 3, state: "g", color: "#7cb342" }
+                ],
+                products: [
+                    { formula: "NH₃", coeff: 2, state: "g", color: "#9c27b0" }
+                ],
+                deltaH: -92, // kJ/mol (exothermic)
+                gasChange: -2, // moles gas decrease
+                description: "Industrial ammonia synthesis",
+                Kc298: 6.0e5, // Literature value at 298K
+                maxTemp: 800 // Industrial process runs at 400-500°C
+            },
+            {
+                name: "Contact Process",
+                reactants: [
+                    { formula: "SO₂", coeff: 2, state: "g", color: "#ff9800" },
+                    { formula: "O₂", coeff: 1, state: "g", color: "#e53935" }
+                ],
+                products: [
+                    { formula: "SO₃", coeff: 2, state: "g", color: "#795548" }
+                ],
+                deltaH: -198,
+                gasChange: -1,
+                description: "Sulfuric acid production",
+                Kc298: 4.0e24, // Very large, highly favors products at 298K
+                maxTemp: 1000 // Gas phase reaction studied up to ~700K
+            },
+            {
+                name: "Water-Gas Shift",
+                reactants: [
+                    { formula: "CO", coeff: 1, state: "g", color: "#607d8b" },
+                    { formula: "H₂O", coeff: 1, state: "g", color: "#03a9f4" }
+                ],
+                products: [
+                    { formula: "CO₂", coeff: 1, state: "g", color: "#9e9e9e" },
+                    { formula: "H₂", coeff: 1, state: "g", color: "#8bc34a" }
+                ],
+                deltaH: -41,
+                gasChange: 0,
+                description: "Hydrogen production",
+                Kc298: 1.0e5, // Favors products at 298K
+                maxTemp: 1000 // Industrial process at 200-450°C
+            },
+            {
+                name: "Esterification",
+                reactants: [
+                    { formula: "CH₃COOH", coeff: 1, state: "aq", color: "#ff5722" },
+                    { formula: "C₂H₅OH", coeff: 1, state: "l", color: "#4caf50" }
+                ],
+                products: [
+                    { formula: "CH₃COOC₂H₅", coeff: 1, state: "l", color: "#e91e63" },
+                    { formula: "H₂O", coeff: 1, state: "l", color: "#2196f3" }
+                ],
+                deltaH: -4,
+                gasChange: 0,
+                description: "Ethyl acetate formation",
+                Kc298: 4.0, // Literature value ~4
+                maxTemp: 400 // Aqueous/liquid system, limited by boiling
+            },
+            {
+                name: "NO₂ Dimerization",
+                reactants: [
+                    { formula: "NO₂", coeff: 2, state: "g", color: "#8d6e63" }
+                ],
+                products: [
+                    { formula: "N₂O₄", coeff: 1, state: "g", color: "#ffc107" }
+                ],
+                deltaH: -57,
+                gasChange: -1,
+                description: "Brown gas equilibrium",
+                Kc298: 170, // Literature value at 298K
+                maxTemp: 500 // Gas phase, decomposes at higher temps
+            },
+            {
+                name: "Methane Steam Reforming",
+                reactants: [
+                    { formula: "CH₄", coeff: 1, state: "g", color: "#00bcd4" },
+                    { formula: "H₂O", coeff: 1, state: "g", color: "#03a9f4" }
+                ],
+                products: [
+                    { formula: "CO", coeff: 1, state: "g", color: "#607d8b" },
+                    { formula: "H₂", coeff: 3, state: "g", color: "#8bc34a" }
+                ],
+                deltaH: 206,
+                gasChange: 2,
+                description: "Syngas production (endothermic)",
+                Kc298: 1.0e-25, // Very unfavorable at 298K (highly endothermic)
+                maxTemp: 1500 // Industrial process at 700-1100°C
+            },
+            {
+                name: "Carbonic Acid Equilibrium",
+                reactants: [
+                    { formula: "CO₂", coeff: 1, state: "aq", color: "#9e9e9e" },
+                    { formula: "H₂O", coeff: 1, state: "l", color: "#2196f3" }
+                ],
+                products: [
+                    { formula: "H₂CO₃", coeff: 1, state: "aq", color: "#ff9800" }
+                ],
+                deltaH: -20,
+                gasChange: 0,
+                description: "Ocean acidification chemistry",
+                Kc298: 1.7e-3, // Slightly favors reactants
+                maxTemp: 400 // Aqueous system
+            },
+            {
+                name: "PCl₅ Decomposition",
+                reactants: [
+                    { formula: "PCl₅", coeff: 1, state: "g", color: "#673ab7" }
+                ],
+                products: [
+                    { formula: "PCl₃", coeff: 1, state: "g", color: "#3f51b5" },
+                    { formula: "Cl₂", coeff: 1, state: "g", color: "#cddc39" }
+                ],
+                deltaH: 93,
+                gasChange: 1,
+                description: "Phosphorus chloride dissociation (endothermic)",
+                Kc298: 0.04, // Favors reactants at 298K
+                maxTemp: 700 // Gas phase dissociation
+            },
+            {
+                name: "Cobalt Chloride Hydration",
+                reactants: [
+                    { formula: "[CoCl₄]²⁻", coeff: 1, state: "aq", color: "#2196f3" },
+                    { formula: "H₂O", coeff: 6, state: "l", color: "#03a9f4" }
+                ],
+                products: [
+                    { formula: "[Co(H₂O)₆]²⁺", coeff: 1, state: "aq", color: "#e91e63" },
+                    { formula: "Cl⁻", coeff: 4, state: "aq", color: "#4caf50" }
+                ],
+                deltaH: -50,
+                gasChange: 0,
+                description: "Blue to pink color change",
+                Kc298: 1.0e4, // Favors pink form at 298K
+                maxTemp: 400 // Aqueous system
+            },
+            {
+                name: "Iron(III) Thiocyanate",
+                reactants: [
+                    { formula: "Fe³⁺", coeff: 1, state: "aq", color: "#ff9800" },
+                    { formula: "SCN⁻", coeff: 1, state: "aq", color: "#9c27b0" }
+                ],
+                products: [
+                    { formula: "FeSCN²⁺", coeff: 1, state: "aq", color: "#f44336" }
+                ],
+                deltaH: -3,
+                gasChange: 0,
+                description: "Blood-red complex formation",
+                Kc298: 890, // Formation constant
+                maxTemp: 400 // Aqueous system
+            }
+        ];
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SIMULATION PARAMETERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            currentReaction: null,
+            temperature: 298,
+            pressure: 1,
+            volume: 1, // in Liters
+            speed: 1,
+            reactantConc: 0.5,
+            productConc: 0.5,
+            targetReactantConc: 0.5,
+            targetProductConc: 0.5,
+            shiftDirection: 0, // -1 = left, 0 = equilibrium, 1 = right
+            currentKc: 1.0, // Current equilibrium constant (temperature-dependent)
+            eqReactantFrac: 0.5, // Equilibrium fraction for reactants (based on K)
+            eqProductFrac: 0.5,  // Equilibrium fraction for products (based on K)
+            totalParticlePool: 50 // Total number of particles for visualization
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // EQUILIBRIUM CALCULATIONS
+        // ═══════════════════════════════════════════════════════════════════════
+        
+        // Calculate Kc at a given temperature using van't Hoff equation
+        function calculateKcAtTemperature(reaction, T) {
+            const R = 8.314; // J/(mol·K)
+            const T1 = 298;  // Reference temperature (K)
+            const Kc298 = reaction.Kc298;
+            const deltaH = reaction.deltaH * 1000; // kJ to J
+            
+            // van't Hoff: ln(K2/K1) = -ΔH°/R × (1/T2 - 1/T1)
+            let lnK2_K1 = (-deltaH / R) * (1/T - 1/T1);
+            return Kc298 * Math.exp(lnK2_K1);
+        }
+        
+        // Convert Kc to equilibrium fractions for visualization
+        // Maps the vast range of K values (10^-25 to 10^25) to visible fractions (0.1 to 0.9)
+        function calculateEquilibriumFractions(Kc) {
+            // Use log scale: logK = 0 means equal, logK > 0 means products favored
+            let logK = Math.log10(Math.max(Kc, 1e-30));
+            
+            // Map logK to product fraction using sigmoid
+            // logK = -10 → ~10% products, logK = 0 → 50%, logK = +10 → ~90% products
+            // Using tanh for smooth transition
+            let productFrac = 0.5 + 0.4 * Math.tanh(logK / 6);
+            
+            // Clamp to reasonable visual range
+            productFrac = Math.max(0.1, Math.min(0.9, productFrac));
+            let reactantFrac = 1 - productFrac;
+            
+            return { reactantFrac, productFrac };
+        }
+        
+        // Update equilibrium state based on current conditions
+        function updateEquilibriumState() {
+            if (!params.currentReaction) return;
+            
+            // Calculate Kc at current temperature
+            params.currentKc = calculateKcAtTemperature(params.currentReaction, params.temperature);
+            
+            // Calculate equilibrium fractions
+            let { reactantFrac, productFrac } = calculateEquilibriumFractions(params.currentKc);
+            params.eqReactantFrac = reactantFrac;
+            params.eqProductFrac = productFrac;
+        }
+
+        let particles = [];
+        let reactionEvents = [];
+        let canvasWidth, canvasHeight;
+        let dividerX;
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // P5.JS SETUP AND DRAW
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function setup() {
+            try {
+                // Responsive canvas sizing
+                let isMobile = windowWidth <= 1024;
+                if (isMobile) {
+                    canvasWidth = min(windowWidth - 24, 900);
+                    canvasHeight = min(windowHeight * 0.4, 400);
+                } else {
+                    canvasWidth = min(windowWidth - 480, 900);
+                    canvasHeight = min(windowHeight - 60, 700);
+                }
+                let canvas = createCanvas(canvasWidth, canvasHeight);
+                canvas.parent('canvas-container');
+                
+                dividerX = canvasWidth / 2;
+                
+                generateNewReaction();
+                
+                let loadingEl = document.querySelector('.loading');
+                if (loadingEl) loadingEl.style.display = 'none';
+            } catch (e) {
+                console.error('Setup error:', e);
+            }
+        }
+
+        function draw() {
+            // Draw background with gradient
+            drawBackground();
+            
+            // Draw equilibrium position indicator
+            drawEquilibriumIndicator();
+            
+            // Draw divider
+            drawDivider();
+            
+            // Update and draw particles
+            updateParticles();
+            drawParticles();
+            
+            // Update concentrations toward target
+            updateConcentrations();
+            
+            // Draw reaction events (visual feedback)
+            drawReactionEvents();
+            
+            // Draw labels
+            drawLabels();
+            
+            // Update UI
+            updateEquilibriumIndicator();
+        }
+
+        function drawEquilibriumIndicator() {
+            // Draw a subtle indicator showing where equilibrium should be based on K
+            // The indicator shows the proportion: left side = reactants, right side = products
+            
+            // Calculate position based on equilibrium fractions
+            // Product fraction determines how much of the visual "space" should be products
+            let eqProductFrac = params.eqProductFrac;
+            
+            // Draw equilibrium marker on the bottom of the container
+            let markerY = height - 8;
+            let markerWidth = width - 40;
+            let markerLeft = 20;
+            
+            // Background bar
+            noStroke();
+            fill(50, 48, 45, 80);
+            rect(markerLeft, markerY - 4, markerWidth, 8, 4);
+            
+            // Reactant portion (teal)
+            fill(90, 138, 135, 120);
+            let reactantWidth = markerWidth * params.eqReactantFrac;
+            rect(markerLeft, markerY - 4, reactantWidth, 8, 4, 0, 0, 4);
+            
+            // Product portion (coral)
+            fill(184, 122, 106, 120);
+            let productWidth = markerWidth * eqProductFrac;
+            rect(markerLeft + reactantWidth, markerY - 4, productWidth, 8, 0, 4, 4, 0);
+            
+            // Current position marker (cream line)
+            let currentProductFrac = params.productConc / (params.productConc + params.reactantConc);
+            let currentX = markerLeft + markerWidth * (1 - currentProductFrac);
+            stroke(232, 228, 220, 200);
+            strokeWeight(2);
+            line(currentX, markerY - 6, currentX, markerY + 2);
+            
+            // Equilibrium target marker (gold triangle)
+            let eqX = markerLeft + markerWidth * params.eqReactantFrac;
+            fill(196, 163, 90, 220);
+            noStroke();
+            triangle(eqX - 4, markerY + 6, eqX + 4, markerY + 6, eqX, markerY + 1);
+            
+            // Label
+            textAlign(CENTER, TOP);
+            textSize(9);
+            fill(106, 101, 96);
+            text("Equilibrium position (K)", width / 2, markerY + 8);
+        }
+
+        function drawBackground() {
+            // Dark themed background with subtle tints
+            noStroke();
+            let tempFactor = map(params.temperature, 200, 500, 0, 1);
+            
+            // Left side - reactants (teal tint)
+            for (let y = 0; y < height; y++) {
+                let inter = map(y, 0, height, 0, 1);
+                let c = lerpColor(
+                    color(22 + tempFactor * 5, 28 + tempFactor * 3, 26 + tempFactor * 2),
+                    color(18 + tempFactor * 8, 24 + tempFactor * 5, 22 + tempFactor * 3),
+                    inter
+                );
+                stroke(c);
+                line(0, y, dividerX - 1, y);
+            }
+            
+            // Right side - products (coral tint)
+            for (let y = 0; y < height; y++) {
+                let inter = map(y, 0, height, 0, 1);
+                let c = lerpColor(
+                    color(26 + tempFactor * 8, 22 + tempFactor * 3, 20 + tempFactor * 2),
+                    color(22 + tempFactor * 10, 18 + tempFactor * 5, 16 + tempFactor * 3),
+                    inter
+                );
+                stroke(c);
+                line(dividerX + 1, y, width, y);
+            }
+        }
+
+        function drawDivider() {
+            // Central equilibrium arrows
+            let arrowY = height / 2;
+            
+            // Draw dashed line divider
+            stroke(70, 68, 65, 100);
+            strokeWeight(1);
+            for (let y = 0; y < height; y += 10) {
+                line(dividerX, y, dividerX, y + 5);
+            }
+            
+            // Calculate arrow animation based on shift
+            let pulseAmount = sin(frameCount * 0.15) * 0.5 + 0.5; // 0 to 1 pulsing
+            let isShifting = params.shiftDirection !== 0;
+            
+            // Arrow dimensions - much larger when shifting
+            let baseArrowLength = 60;
+            let baseArrowHeight = 20;
+            let baseStrokeWeight = 3;
+            
+            if (isShifting) {
+                baseArrowLength = 100 + pulseAmount * 30;
+                baseArrowHeight = 30 + pulseAmount * 10;
+                baseStrokeWeight = 5 + pulseAmount * 3;
+            }
+            
+            // Draw glow/shadow for active arrow
+            if (params.shiftDirection > 0) {
+                // Glow for forward arrow (coral)
+                for (let i = 3; i > 0; i--) {
+                    stroke(184, 122, 106, 30 * pulseAmount);
+                    strokeWeight(baseStrokeWeight + i * 6);
+                    let glowLen = baseArrowLength;
+                    line(dividerX - glowLen/2, arrowY - 25, dividerX + glowLen/2, arrowY - 25);
+                }
+            } else if (params.shiftDirection < 0) {
+                // Glow for reverse arrow (teal)
+                for (let i = 3; i > 0; i--) {
+                    stroke(90, 138, 135, 30 * pulseAmount);
+                    strokeWeight(baseStrokeWeight + i * 6);
+                    let glowLen = baseArrowLength;
+                    line(dividerX + glowLen/2, arrowY + 25, dividerX - glowLen/2, arrowY + 25);
+                }
+            }
+            
+            // Forward arrow (right) - PRODUCTS (coral)
+            let rightActive = params.shiftDirection > 0;
+            let rightAlpha = rightActive ? 255 : (params.shiftDirection < 0 ? 80 : 150);
+            let rightWeight = rightActive ? baseStrokeWeight : 2;
+            let rightLength = rightActive ? baseArrowLength : 50;
+            let rightHeadSize = rightActive ? baseArrowHeight : 12;
+            
+            stroke(184, 122, 106, rightAlpha);
+            strokeWeight(rightWeight);
+            
+            // Arrow shaft
+            let rightStartX = dividerX - rightLength/2;
+            let rightEndX = dividerX + rightLength/2;
+            line(rightStartX, arrowY - 25, rightEndX, arrowY - 25);
+            
+            // Arrow head
+            fill(184, 122, 106, rightAlpha);
+            noStroke();
+            triangle(
+                rightEndX + rightHeadSize/2, arrowY - 25,
+                rightEndX - rightHeadSize/2, arrowY - 25 - rightHeadSize/2,
+                rightEndX - rightHeadSize/2, arrowY - 25 + rightHeadSize/2
+            );
+            
+            // Add animated particles flowing along arrow when shifting forward
+            if (rightActive) {
+                for (let i = 0; i < 5; i++) {
+                    let t = ((frameCount * 0.03 + i * 0.2) % 1);
+                    let px = lerp(rightStartX, rightEndX, t);
+                    let py = arrowY - 25 + sin(t * PI * 2 + frameCount * 0.1) * 3;
+                    fill(232, 228, 220, 200 * (1-t));
+                    noStroke();
+                    ellipse(px, py, 6 * (1-t*0.5), 6 * (1-t*0.5));
+                }
+            }
+            
+            // Reverse arrow (left) - REACTANTS (teal)
+            let leftActive = params.shiftDirection < 0;
+            let leftAlpha = leftActive ? 255 : (params.shiftDirection > 0 ? 80 : 150);
+            let leftWeight = leftActive ? baseStrokeWeight : 2;
+            let leftLength = leftActive ? baseArrowLength : 50;
+            let leftHeadSize = leftActive ? baseArrowHeight : 12;
+            
+            stroke(90, 138, 135, leftAlpha);
+            strokeWeight(leftWeight);
+            
+            // Arrow shaft
+            let leftStartX = dividerX + leftLength/2;
+            let leftEndX = dividerX - leftLength/2;
+            line(leftStartX, arrowY + 25, leftEndX, arrowY + 25);
+            
+            // Arrow head
+            fill(90, 138, 135, leftAlpha);
+            noStroke();
+            triangle(
+                leftEndX - leftHeadSize/2, arrowY + 25,
+                leftEndX + leftHeadSize/2, arrowY + 25 - leftHeadSize/2,
+                leftEndX + leftHeadSize/2, arrowY + 25 + leftHeadSize/2
+            );
+            
+            // Add animated particles flowing along arrow when shifting backward
+            if (leftActive) {
+                for (let i = 0; i < 5; i++) {
+                    let t = ((frameCount * 0.03 + i * 0.2) % 1);
+                    let px = lerp(leftStartX, leftEndX, t);
+                    let py = arrowY + 25 + sin(t * PI * 2 + frameCount * 0.1) * 3;
+                    fill(232, 228, 220, 200 * (1-t));
+                    noStroke();
+                    ellipse(px, py, 6 * (1-t*0.5), 6 * (1-t*0.5));
+                }
+            }
+            
+            // Draw direction label when shifting
+            if (isShifting) {
+                textAlign(CENTER, CENTER);
+                textSize(14);
+                noStroke();
+                
+                if (params.shiftDirection > 0) {
+                    fill(184, 122, 106, 200 + pulseAmount * 55);
+                    text("→ FORWARD →", dividerX, arrowY - 55);
+                } else {
+                    fill(90, 138, 135, 200 + pulseAmount * 55);
+                    text("← REVERSE ←", dividerX, arrowY + 55);
+                }
+            }
+            
+            strokeWeight(1);
+        }
+
+        function drawLabels() {
+            textAlign(CENTER, TOP);
+            textSize(16);
+            noStroke();
+            
+            fill(90, 138, 135);
+            text("REACTANTS", dividerX / 2, 15);
+            
+            fill(184, 122, 106);
+            text("PRODUCTS", dividerX + (width - dividerX) / 2, 15);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PARTICLE SYSTEM
+        // ═══════════════════════════════════════════════════════════════════════
+
+        class Particle {
+            constructor(species, side, x, y) {
+                this.species = species;
+                this.side = side; // 'reactant' or 'product'
+                this.x = x || (side === 'reactant' ? random(30, dividerX - 30) : random(dividerX + 30, width - 30));
+                this.y = y || random(50, height - 30);
+                this.vx = random(-1, 1);
+                this.vy = random(-1, 1);
+                this.size = map(species.coeff, 1, 6, 18, 12);
+                this.angle = random(TWO_PI);
+                this.angularVel = random(-0.02, 0.02);
+                this.wobble = random(1000);
+                this.alpha = 255;
+                this.born = frameCount;
+            }
+            
+            update() {
+                let speedMult = params.speed * map(params.temperature, 200, 500, 0.5, 2);
+                
+                // Add Brownian motion
+                this.vx += random(-0.1, 0.1) * speedMult;
+                this.vy += random(-0.1, 0.1) * speedMult;
+                
+                // Add some perlin noise for organic movement
+                let noiseVal = noise(this.x * 0.01, this.y * 0.01, frameCount * 0.01);
+                this.vx += (noiseVal - 0.5) * 0.1 * speedMult;
+                this.vy += (noise(this.y * 0.01, this.x * 0.01, frameCount * 0.01) - 0.5) * 0.1 * speedMult;
+                
+                // Damping
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                
+                // Speed limit
+                let maxSpeed = 3 * speedMult;
+                let speed = sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > maxSpeed) {
+                    this.vx = (this.vx / speed) * maxSpeed;
+                    this.vy = (this.vy / speed) * maxSpeed;
+                }
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Boundary collision for respective side
+                let leftBound = this.side === 'reactant' ? 20 : dividerX + 20;
+                let rightBound = this.side === 'reactant' ? dividerX - 20 : width - 20;
+                
+                if (this.x < leftBound) { this.x = leftBound; this.vx *= -0.8; }
+                if (this.x > rightBound) { this.x = rightBound; this.vx *= -0.8; }
+                if (this.y < 45) { this.y = 45; this.vy *= -0.8; }
+                if (this.y > height - 20) { this.y = height - 20; this.vy *= -0.8; }
+                
+                this.angle += this.angularVel * speedMult;
+            }
+            
+            draw() {
+                push();
+                translate(this.x, this.y);
+                rotate(this.angle);
+                
+                // Glow effect
+                let glowSize = this.size + 8 + sin(frameCount * 0.05 + this.wobble) * 2;
+                let col = color(this.species.color);
+                fill(red(col), green(col), blue(col), 30);
+                noStroke();
+                ellipse(0, 0, glowSize, glowSize);
+                
+                // Main particle
+                fill(this.species.color);
+                stroke(0, 30);
+                strokeWeight(1);
+                ellipse(0, 0, this.size, this.size);
+                
+                // Highlight
+                fill(255, 100);
+                noStroke();
+                ellipse(-this.size * 0.2, -this.size * 0.2, this.size * 0.3, this.size * 0.3);
+                
+                // Formula label
+                fill(255);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                textSize(max(8, this.size * 0.45));
+                let shortFormula = this.species.formula.replace(/[₀₁₂₃₄₅₆₇₈₉⁺⁻]/g, '').substring(0, 3);
+                text(shortFormula, 0, 0);
+                
+                pop();
+            }
+        }
+
+        function initializeParticles() {
+            particles = [];
+            if (!params.currentReaction) return;
+            
+            let reaction = params.currentReaction;
+            
+            // Calculate target counts based on current concentrations
+            let { reactantTarget, productTarget } = getTargetParticleCounts();
+            
+            // Create reactant particles, distributed by stoichiometry
+            let totalReactantCoeff = reaction.reactants.reduce((sum, s) => sum + s.coeff, 0);
+            reaction.reactants.forEach(species => {
+                let count = Math.round(reactantTarget * species.coeff / totalReactantCoeff);
+                count = Math.max(1, count);
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle(species, 'reactant'));
+                }
+            });
+            
+            // Create product particles, distributed by stoichiometry
+            let totalProductCoeff = reaction.products.reduce((sum, s) => sum + s.coeff, 0);
+            reaction.products.forEach(species => {
+                let count = Math.round(productTarget * species.coeff / totalProductCoeff);
+                count = Math.max(1, count);
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle(species, 'product'));
+                }
+            });
+        }
+        
+        function getTargetParticleCounts() {
+            // Particle counts are directly proportional to concentrations
+            // NOT normalized - total can change when species are added/removed
+            let baseScale = params.totalParticlePool; // 50 particles = 1.0 concentration unit
+            
+            let reactantTarget = Math.round(params.reactantConc * baseScale);
+            let productTarget = Math.round(params.productConc * baseScale);
+            
+            // Ensure minimums for visibility
+            reactantTarget = Math.max(2, reactantTarget);
+            productTarget = Math.max(2, productTarget);
+            
+            return { reactantTarget, productTarget };
+        }
+
+        function updateParticles() {
+            // Update particle positions
+            particles.forEach(p => p.update());
+            
+            // Synchronize particle counts with concentrations
+            if (frameCount % 3 === 0) { // Don't do this every frame for performance
+                synchronizeParticleCounts();
+            }
+        }
+        
+        function synchronizeParticleCounts() {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            let { reactantTarget, productTarget } = getTargetParticleCounts();
+            
+            let reactantParticles = particles.filter(p => p.side === 'reactant');
+            let productParticles = particles.filter(p => p.side === 'product');
+            
+            let reactantCount = reactantParticles.length;
+            let productCount = productParticles.length;
+            
+            // Adjust reactant particles
+            if (reactantCount < reactantTarget) {
+                // Need more reactants - add particles
+                let toAdd = Math.min(2, reactantTarget - reactantCount);
+                for (let i = 0; i < toAdd; i++) {
+                    let species = reaction.reactants[floor(random(reaction.reactants.length))];
+                    let newParticle = new Particle(species, 'reactant');
+                    // If shifting backward, spawn near the divider (coming from products)
+                    if (params.shiftDirection < 0) {
+                        newParticle.x = dividerX - 30 - random(20);
+                        createReactionEvent(newParticle.x, newParticle.y, species.color);
+                    }
+                    particles.push(newParticle);
+                }
+            } else if (reactantCount > reactantTarget) {
+                // Too many reactants - remove particles
+                let toRemove = Math.min(2, reactantCount - reactantTarget);
+                for (let i = 0; i < toRemove; i++) {
+                    if (reactantParticles.length > 0) {
+                        let p = reactantParticles[floor(random(reactantParticles.length))];
+                        let idx = particles.indexOf(p);
+                        if (idx > -1) {
+                            // If shifting forward, create effect at divider
+                            if (params.shiftDirection > 0) {
+                                createReactionEvent(p.x, p.y, p.species.color);
+                            }
+                            particles.splice(idx, 1);
+                            reactantParticles = reactantParticles.filter(rp => rp !== p);
+                        }
+                    }
+                }
+            }
+            
+            // Adjust product particles
+            if (productCount < productTarget) {
+                // Need more products - add particles
+                let toAdd = Math.min(2, productTarget - productCount);
+                for (let i = 0; i < toAdd; i++) {
+                    let species = reaction.products[floor(random(reaction.products.length))];
+                    let newParticle = new Particle(species, 'product');
+                    // If shifting forward, spawn near the divider (coming from reactants)
+                    if (params.shiftDirection > 0) {
+                        newParticle.x = dividerX + 30 + random(20);
+                        createReactionEvent(newParticle.x, newParticle.y, species.color);
+                    }
+                    particles.push(newParticle);
+                }
+            } else if (productCount > productTarget) {
+                // Too many products - remove particles
+                let toRemove = Math.min(2, productCount - productTarget);
+                for (let i = 0; i < toRemove; i++) {
+                    if (productParticles.length > 0) {
+                        let p = productParticles[floor(random(productParticles.length))];
+                        let idx = particles.indexOf(p);
+                        if (idx > -1) {
+                            // If shifting backward, create effect at divider
+                            if (params.shiftDirection < 0) {
+                                createReactionEvent(p.x, p.y, p.species.color);
+                            }
+                            particles.splice(idx, 1);
+                            productParticles = productParticles.filter(pp => pp !== p);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function createReactionEvent(x, y, color) {
+            reactionEvents.push({
+                x: x,
+                y: y,
+                color: color,
+                size: 25,
+                alpha: 200
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach(p => p.draw());
+        }
+
+        function drawReactionEvents() {
+            for (let i = reactionEvents.length - 1; i >= 0; i--) {
+                let e = reactionEvents[i];
+                noFill();
+                stroke(red(color(e.color)), green(color(e.color)), blue(color(e.color)), e.alpha);
+                strokeWeight(2);
+                ellipse(e.x, e.y, e.size, e.size);
+                
+                e.size += 3;
+                e.alpha -= 15;
+                
+                if (e.alpha <= 0) {
+                    reactionEvents.splice(i, 1);
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // EQUILIBRIUM LOGIC
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateConcentrations() {
+            // Gradually move concentrations toward target (re-equilibration)
+            let rate = 0.008 * params.speed;
+            
+            // Move both concentrations toward their targets
+            params.reactantConc += (params.targetReactantConc - params.reactantConc) * rate;
+            params.productConc += (params.targetProductConc - params.productConc) * rate;
+            
+            // Check if equilibrium is nearly reached
+            let reactantDiff = abs(params.reactantConc - params.targetReactantConc);
+            let productDiff = abs(params.productConc - params.targetProductConc);
+            
+            if (reactantDiff < 0.01 && productDiff < 0.01) {
+                // Snap to equilibrium
+                params.reactantConc = params.targetReactantConc;
+                params.productConc = params.targetProductConc;
+                params.shiftDirection = 0;
+            }
+            
+            // Update equilibrium constants display every few frames
+            if (frameCount % 5 === 0) {
+                updateEquilibriumConstants();
+            }
+        }
+
+        function shiftEquilibrium(direction, magnitude = 0.15) {
+            // direction: 'forward' or 'reverse'
+            // magnitude: how much the current state is disturbed
+            // The system always returns to the K-determined equilibrium
+            
+            if (direction === 'forward') {
+                // Disturb current state
+                params.reactantConc = max(0.05, params.reactantConc - magnitude * 0.5);
+                params.productConc = min(0.95, params.productConc + magnitude * 0.5);
+                params.shiftDirection = 1;
+            } else {
+                params.reactantConc = min(0.95, params.reactantConc + magnitude * 0.5);
+                params.productConc = max(0.05, params.productConc - magnitude * 0.5);
+                params.shiftDirection = -1;
+            }
+            
+            // Target is always the K-determined equilibrium
+            params.targetReactantConc = params.eqReactantFrac;
+            params.targetProductConc = params.eqProductFrac;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // USER INTERACTIONS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function addReactant() {
+            // Adding reactant increases reactant amount
+            // Product amount stays the same immediately - this is the key fix!
+            params.reactantConc += 0.15;
+            // params.productConc stays unchanged
+            
+            // New equilibrium: same ratio as K determines, but with new total amount
+            let newTotal = params.reactantConc + params.productConc;
+            params.targetReactantConc = newTotal * params.eqReactantFrac;
+            params.targetProductConc = newTotal * params.eqProductFrac;
+            
+            params.shiftDirection = 1; // Forward reaction to consume excess reactant
+            
+            updateEquilibriumConstants();
+            updateExplanation("You added reactant! <strong>Q immediately drops below K</strong> (more reactants in denominator). The system shifts <strong>forward (→)</strong> to consume excess reactant until Q = K again.");
+        }
+
+        function removeReactant() {
+            // Removing reactant decreases reactant amount
+            // Product amount stays the same immediately
+            params.reactantConc = max(0.05, params.reactantConc - 0.15);
+            // params.productConc stays unchanged
+            
+            // New equilibrium with reduced total
+            let newTotal = params.reactantConc + params.productConc;
+            params.targetReactantConc = newTotal * params.eqReactantFrac;
+            params.targetProductConc = newTotal * params.eqProductFrac;
+            
+            params.shiftDirection = -1; // Reverse reaction to produce more reactant
+            
+            updateEquilibriumConstants();
+            updateExplanation("You removed reactant! <strong>Q immediately rises above K</strong> (less reactants in denominator). The system shifts <strong>backward (←)</strong> to produce more reactant until Q = K again.");
+        }
+
+        function addProduct() {
+            // Adding product increases product amount
+            // Reactant amount stays the same immediately
+            params.productConc += 0.15;
+            // params.reactantConc stays unchanged
+            
+            // New equilibrium with increased total
+            let newTotal = params.reactantConc + params.productConc;
+            params.targetReactantConc = newTotal * params.eqReactantFrac;
+            params.targetProductConc = newTotal * params.eqProductFrac;
+            
+            params.shiftDirection = -1; // Reverse reaction to consume excess product
+            
+            updateEquilibriumConstants();
+            updateExplanation("You added product! <strong>Q immediately rises above K</strong> (more products in numerator). The system shifts <strong>backward (←)</strong> to consume excess product until Q = K again.");
+        }
+
+        function removeProduct() {
+            // Removing product decreases product amount
+            // Reactant amount stays the same immediately
+            params.productConc = max(0.05, params.productConc - 0.15);
+            // params.reactantConc stays unchanged
+            
+            // New equilibrium with reduced total
+            let newTotal = params.reactantConc + params.productConc;
+            params.targetReactantConc = newTotal * params.eqReactantFrac;
+            params.targetProductConc = newTotal * params.eqProductFrac;
+            
+            params.shiftDirection = 1; // Forward reaction to produce more product
+            
+            updateEquilibriumConstants();
+            updateExplanation("You removed product! <strong>Q immediately drops below K</strong> (less products in numerator). The system shifts <strong>forward (→)</strong> to produce more product until Q = K again.");
+        }
+
+        function addHeat() {
+            let maxTemp = params.currentReaction ? (params.currentReaction.maxTemp || 800) : 800;
+            params.temperature = min(maxTemp, params.temperature + 50);
+            document.getElementById('temperature').value = params.temperature;
+            document.getElementById('temp-value').textContent = params.temperature;
+            
+            let reaction = params.currentReaction;
+            if (reaction) {
+                // Temperature change affects K via van't Hoff equation
+                // Recalculate equilibrium state with new temperature
+                let oldEqProduct = params.eqProductFrac;
+                updateEquilibriumState();
+                
+                // Set targets to new K-determined equilibrium
+                params.targetReactantConc = params.eqReactantFrac;
+                params.targetProductConc = params.eqProductFrac;
+                
+                if (reaction.deltaH < 0) {
+                    // Exothermic: adding heat decreases K, shifts backward
+                    params.shiftDirection = -1;
+                    updateExplanation(`This reaction is <strong>exothermic</strong> (ΔH = ${reaction.deltaH} kJ/mol). Adding heat <strong>decreases K</strong> (van't Hoff), shifting equilibrium <strong>backward (←)</strong> toward reactants.`);
+                } else {
+                    // Endothermic: adding heat increases K, shifts forward
+                    params.shiftDirection = 1;
+                    updateExplanation(`This reaction is <strong>endothermic</strong> (ΔH = +${reaction.deltaH} kJ/mol). Adding heat <strong>increases K</strong> (van't Hoff), shifting equilibrium <strong>forward (→)</strong> toward products.`);
+                }
+            }
+            updateEquilibriumConstants();
+        }
+
+        function removeHeat() {
+            params.temperature = max(1, params.temperature - 50);
+            document.getElementById('temperature').value = params.temperature;
+            document.getElementById('temp-value').textContent = params.temperature;
+            
+            let reaction = params.currentReaction;
+            if (reaction) {
+                // Temperature change affects K via van't Hoff equation
+                let oldEqProduct = params.eqProductFrac;
+                updateEquilibriumState();
+                
+                // Set targets to new K-determined equilibrium
+                params.targetReactantConc = params.eqReactantFrac;
+                params.targetProductConc = params.eqProductFrac;
+                
+                if (reaction.deltaH < 0) {
+                    // Exothermic: removing heat increases K, shifts forward
+                    params.shiftDirection = 1;
+                    updateExplanation(`This reaction is <strong>exothermic</strong> (ΔH = ${reaction.deltaH} kJ/mol). Removing heat <strong>increases K</strong> (van't Hoff), shifting equilibrium <strong>forward (→)</strong> toward products.`);
+                } else {
+                    // Endothermic: removing heat decreases K, shifts backward
+                    params.shiftDirection = -1;
+                    updateExplanation(`This reaction is <strong>endothermic</strong> (ΔH = +${reaction.deltaH} kJ/mol). Removing heat <strong>decreases K</strong> (van't Hoff), shifting equilibrium <strong>backward (←)</strong> toward reactants.`);
+                }
+            }
+            updateEquilibriumConstants();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // VOLUME & PRESSURE CONTROL (Boyle's Law: P ∝ 1/V)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        // Convert logarithmic slider value to actual volume
+        function updateVolumeLog(logValue) {
+            let volume = Math.pow(10, parseFloat(logValue));
+            updateVolume(volume);
+        }
+
+        function updateVolume(value) {
+            let oldVolume = params.volume;
+            params.volume = parseFloat(value);
+            
+            // Update volume displays with appropriate precision
+            let volDisplay = formatValue(params.volume, 'L');
+            document.getElementById('volume-value').textContent = volDisplay;
+            document.getElementById('volume-display').textContent = volDisplay;
+            
+            // Pressure is inversely proportional to volume (Boyle's Law)
+            // Reference: P = 1 atm at V = 1 L
+            params.pressure = 1 / params.volume;
+            let presDisplay = formatValue(params.pressure, 'atm');
+            document.getElementById('pressure-display').textContent = presDisplay;
+            
+            // Handle equilibrium shift for significant changes
+            let logChange = Math.abs(Math.log10(params.volume) - Math.log10(oldVolume));
+            if (logChange >= 0.1) {
+                handleVolumeChange(oldVolume, params.volume);
+            }
+            
+            // Update equilibrium constants display
+            updateEquilibriumConstants();
+        }
+
+        // Format values nicely across wide ranges
+        function formatValue(value, unit) {
+            if (value >= 100) {
+                return value.toFixed(0) + ' ' + unit;
+            } else if (value >= 10) {
+                return value.toFixed(1) + ' ' + unit;
+            } else if (value >= 1) {
+                return value.toFixed(2) + ' ' + unit;
+            } else if (value >= 0.01) {
+                return value.toFixed(3) + ' ' + unit;
+            } else {
+                return value.toExponential(2) + ' ' + unit;
+            }
+        }
+
+        function compressContainer() {
+            let newVolume = max(0.001, params.volume * 0.5); // 50% compression
+            let logValue = Math.log10(newVolume);
+            document.getElementById('volume').value = logValue;
+            updateVolume(newVolume);
+            
+            let reaction = params.currentReaction;
+            if (reaction && reaction.gasChange !== 0) {
+                if (reaction.gasChange < 0) {
+                    shiftEquilibrium('forward');
+                    updateExplanation(`<strong>Volume decreased → Pressure increased!</strong><br>The system shifts <strong>forward (→)</strong> toward the side with fewer gas molecules (Δn = ${reaction.gasChange}) to reduce pressure.`);
+                } else {
+                    shiftEquilibrium('reverse');
+                    updateExplanation(`<strong>Volume decreased → Pressure increased!</strong><br>The system shifts <strong>backward (←)</strong> toward the side with fewer gas molecules (Δn = +${reaction.gasChange} favors reactants) to reduce pressure.`);
+                }
+            } else if (reaction) {
+                updateExplanation(`<strong>Volume decreased → Pressure increased!</strong><br>This reaction has <strong>equal moles of gas</strong> on both sides (Δn = 0), so the equilibrium position is <strong>not affected</strong>.`);
+            }
+        }
+
+        function expandContainer() {
+            let newVolume = min(1000, params.volume * 2); // 100% expansion
+            let logValue = Math.log10(newVolume);
+            document.getElementById('volume').value = logValue;
+            updateVolume(newVolume);
+            
+            let reaction = params.currentReaction;
+            if (reaction && reaction.gasChange !== 0) {
+                if (reaction.gasChange < 0) {
+                    shiftEquilibrium('reverse');
+                    updateExplanation(`<strong>Volume increased → Pressure decreased!</strong><br>The system shifts <strong>backward (←)</strong> toward the side with more gas molecules (Δn = ${reaction.gasChange} means more moles in reactants).`);
+                } else {
+                    shiftEquilibrium('forward');
+                    updateExplanation(`<strong>Volume increased → Pressure decreased!</strong><br>The system shifts <strong>forward (→)</strong> toward the side with more gas molecules (Δn = +${reaction.gasChange} means more moles in products).`);
+                }
+            } else if (reaction) {
+                updateExplanation(`<strong>Volume increased → Pressure decreased!</strong><br>This reaction has <strong>equal moles of gas</strong> on both sides (Δn = 0), so the equilibrium position is <strong>not affected</strong>.`);
+            }
+        }
+
+        function handleVolumeChange(oldVolume, newVolume) {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            // Shift equilibrium based on volume change and Δn_gas
+            if (reaction.gasChange !== 0) {
+                if (newVolume < oldVolume) {
+                    // Compression (pressure increase) - favor fewer moles
+                    if (reaction.gasChange < 0) {
+                        shiftEquilibrium('forward', 0.05);
+                    } else {
+                        shiftEquilibrium('reverse', 0.05);
+                    }
+                } else {
+                    // Expansion (pressure decrease) - favor more moles
+                    if (reaction.gasChange < 0) {
+                        shiftEquilibrium('reverse', 0.05);
+                    } else {
+                        shiftEquilibrium('forward', 0.05);
+                    }
+                }
+            }
+        }
+
+        function increasePressure() {
+            compressContainer();
+        }
+
+        function decreasePressure() {
+            expandContainer();
+        }
+
+        function updateTemperature(value) {
+            let oldTemp = params.temperature;
+            params.temperature = parseInt(value);
+            document.getElementById('temp-value').textContent = params.temperature;
+            
+            // Temperature changes K, so recalculate equilibrium state
+            updateEquilibriumState();
+            
+            // Set targets to new K-determined equilibrium
+            params.targetReactantConc = params.eqReactantFrac;
+            params.targetProductConc = params.eqProductFrac;
+            
+            // Determine shift direction based on change
+            if (abs(params.temperature - oldTemp) >= 10) {
+                let reaction = params.currentReaction;
+                if (reaction) {
+                    let heating = params.temperature > oldTemp;
+                    if (heating) {
+                        // Heating: exothermic shifts backward, endothermic shifts forward
+                        params.shiftDirection = (reaction.deltaH < 0) ? -1 : 1;
+                    } else {
+                        // Cooling: exothermic shifts forward, endothermic shifts backward
+                        params.shiftDirection = (reaction.deltaH < 0) ? 1 : -1;
+                    }
+                }
+            }
+            
+            updateEquilibriumConstants();
+        }
+
+        function updateSpeed(value) {
+            params.speed = parseFloat(value);
+            document.getElementById('speed-value').textContent = value + 'x';
+        }
+
+        function resetEquilibrium() {
+            let maxTemp = params.currentReaction ? (params.currentReaction.maxTemp || 800) : 800;
+            
+            params.temperature = Math.min(298, maxTemp);
+            params.volume = 1;
+            params.pressure = 1;
+            
+            // Recalculate equilibrium at the reset temperature
+            updateEquilibriumState();
+            params.targetReactantConc = params.eqReactantFrac;
+            params.targetProductConc = params.eqProductFrac;
+            params.reactantConc = params.eqReactantFrac;
+            params.productConc = params.eqProductFrac;
+            params.shiftDirection = 0;
+            
+            document.getElementById('temperature').value = params.temperature;
+            document.getElementById('temp-value').textContent = params.temperature;
+            document.getElementById('volume').value = 0; // log10(1) = 0
+            document.getElementById('volume-value').textContent = '1.00 L';
+            document.getElementById('volume-display').textContent = '1.00 L';
+            document.getElementById('pressure-display').textContent = '1.00 atm';
+            
+            initializeParticles();
+            updateEquilibriumConstants();
+            updateExplanation("<strong>Le Chatelier's Principle:</strong> When a system at equilibrium is disturbed, it shifts to counteract the change and establish a new equilibrium.");
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // REACTION GENERATION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function generateNewReaction() {
+            try {
+                let availableReactions = reactions.filter(r => r !== params.currentReaction);
+                if (availableReactions.length === 0) availableReactions = reactions;
+                params.currentReaction = availableReactions[floor(random(availableReactions.length))];
+                
+                // Calculate equilibrium state based on K at current temperature
+                updateEquilibriumState();
+                
+                // Set concentrations to the K-determined equilibrium position
+                params.reactantConc = params.eqReactantFrac;
+                params.productConc = params.eqProductFrac;
+                params.targetReactantConc = params.eqReactantFrac;
+                params.targetProductConc = params.eqProductFrac;
+                params.shiftDirection = 0;
+                params.volume = 1;
+                params.pressure = 1;
+                
+                // Reset volume/pressure display - with null checks
+                let volumeSlider = document.getElementById('volume');
+                if (volumeSlider) volumeSlider.value = 0;
+                
+                let volumeValue = document.getElementById('volume-value');
+                if (volumeValue) volumeValue.textContent = '1.00 L';
+                
+                let volumeDisplay = document.getElementById('volume-display');
+                if (volumeDisplay) volumeDisplay.textContent = '1.00 L';
+                
+                let pressureDisplay = document.getElementById('pressure-display');
+                if (pressureDisplay) pressureDisplay.textContent = '1.00 atm';
+                
+                // Update temperature slider range for this reaction
+                let maxTemp = params.currentReaction.maxTemp || 800;
+                let tempSlider = document.getElementById('temperature');
+                if (tempSlider) {
+                    tempSlider.min = 1;
+                    tempSlider.max = maxTemp;
+                }
+                
+                // Reset temperature to 298K (or maxTemp if 298 exceeds it)
+                params.temperature = Math.min(298, maxTemp);
+                if (tempSlider) tempSlider.value = params.temperature;
+                
+                let tempValue = document.getElementById('temp-value');
+                if (tempValue) tempValue.textContent = params.temperature;
+                
+                let tempMinLabel = document.getElementById('temp-min-label');
+                if (tempMinLabel) tempMinLabel.textContent = '1 K';
+                
+                let tempMaxLabel = document.getElementById('temp-max-label');
+                if (tempMaxLabel) tempMaxLabel.textContent = maxTemp + ' K';
+                
+                // Recalculate equilibrium at new temperature
+                updateEquilibriumState();
+                params.reactantConc = params.eqReactantFrac;
+                params.productConc = params.eqProductFrac;
+                params.targetReactantConc = params.eqReactantFrac;
+                params.targetProductConc = params.eqProductFrac;
+                
+                // Update display
+                updateReactionDisplay();
+                initializeParticles();
+                
+                // Show/hide volume/pressure controls based on whether it's a gas reaction
+                let hasGases = params.currentReaction.reactants.some(s => s.state === 'g') ||
+                              params.currentReaction.products.some(s => s.state === 'g');
+                let volumeSection = document.getElementById('section-volume');
+                if (volumeSection) volumeSection.style.display = hasGases ? 'block' : 'none';
+                
+                // Create explanation showing the K-determined equilibrium position
+                let kInfo = params.currentKc > 1 ? 
+                    `K = ${params.currentKc.toExponential(1)} (K > 1: products favored at equilibrium)` :
+                    params.currentKc < 1 ?
+                    `K = ${params.currentKc.toExponential(1)} (K < 1: reactants favored at equilibrium)` :
+                    `K ≈ 1 (roughly equal amounts at equilibrium)`;
+                
+                updateExplanation(`<strong>Le Chatelier's Principle:</strong> When a system at equilibrium is disturbed, it shifts to counteract the change.<br><br><em>${kInfo}</em>`);
+            } catch (e) {
+                console.error('generateNewReaction error:', e);
+            }
+        }
+
+        function updateReactionDisplay() {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            // Build equation string with colored molecules
+            let reactantStr = reaction.reactants.map(s => 
+                (s.coeff > 1 ? s.coeff : '') + 
+                `<span class="molecule-colored" style="color: ${s.color}">${s.formula}</span>` + 
+                '<sub>(' + s.state + ')</sub>'
+            ).join(' + ');
+            
+            let productStr = reaction.products.map(s => 
+                (s.coeff > 1 ? s.coeff : '') + 
+                `<span class="molecule-colored" style="color: ${s.color}">${s.formula}</span>` + 
+                '<sub>(' + s.state + ')</sub>'
+            ).join(' + ');
+            
+            let eqEl = document.getElementById('reaction-equation');
+            if (eqEl) eqEl.innerHTML = reactantStr + ' ⇌ ' + productStr;
+            
+            let infoEl = document.getElementById('reaction-info');
+            if (infoEl) infoEl.innerHTML = `<strong>${reaction.name}</strong><br>${reaction.description}`;
+            
+            // Update thermo indicator
+            let thermoIndicator = document.getElementById('thermo-indicator');
+            if (thermoIndicator) {
+                let isExothermic = reaction.deltaH < 0;
+                let deltaHStr = reaction.deltaH > 0 ? '+' + reaction.deltaH : reaction.deltaH;
+                
+                thermoIndicator.className = 'thermo-indicator ' + (isExothermic ? 'exothermic' : 'endothermic');
+                thermoIndicator.innerHTML = `
+                    <div class="thermo-top">
+                        <span class="icon">${isExothermic ? '🔥' : '❄️'}</span>
+                        <span class="text">${isExothermic ? 'Exothermic' : 'Endothermic'}</span>
+                    </div>
+                    <span class="delta-h">ΔH = ${deltaHStr} kJ/mol</span>
+                `;
+            }
+            
+            // Update specific molecule buttons
+            updateSpecificMoleculeButtons();
+            
+            // Update equilibrium constant expressions
+            updateEquilibriumConstants();
+        }
+
+        function updateEquilibriumConstants() {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // CALCULATE Kc AT CURRENT TEMPERATURE USING VAN'T HOFF EQUATION
+            // ln(K2/K1) = -ΔH°/R × (1/T2 - 1/T1)
+            // ═══════════════════════════════════════════════════════════════════
+            
+            const R = 8.314; // J/(mol·K) - gas constant
+            const T1 = 298;  // Reference temperature (K)
+            const T2 = params.temperature; // Current temperature (K)
+            const Kc298 = reaction.Kc298; // Equilibrium constant at 298K
+            const deltaH = reaction.deltaH * 1000; // Convert kJ to J
+            
+            // Van't Hoff equation: ln(K2/K1) = -ΔH°/R × (1/T2 - 1/T1)
+            let lnK2_K1 = (-deltaH / R) * (1/T2 - 1/T1);
+            let Kc = Kc298 * Math.exp(lnK2_K1);
+            
+            // Store for use elsewhere
+            params.currentKc = Kc;
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // CALCULATE EQUILIBRIUM CONCENTRATIONS FROM Kc
+            // For a reaction aA + bB ⇌ cC + dD, at equilibrium:
+            // Kc = [C]^c[D]^d / [A]^a[B]^b
+            // ═══════════════════════════════════════════════════════════════════
+            
+            // Filter for species that appear in Kc (exclude pure solids and liquids)
+            let kcReactants = reaction.reactants.filter(s => s.state === 'g' || s.state === 'aq');
+            let kcProducts = reaction.products.filter(s => s.state === 'g' || s.state === 'aq');
+            
+            // Calculate total stoichiometric coefficients
+            let totalReactantCoeffs = kcReactants.reduce((sum, s) => sum + s.coeff, 0) || 1;
+            let totalProductCoeffs = kcProducts.reduce((sum, s) => sum + s.coeff, 0) || 1;
+            let deltaCoeffs = totalProductCoeffs - totalReactantCoeffs;
+            
+            // Calculate equilibrium concentrations
+            // We use a simplified model where at equilibrium, the ratio of products to reactants
+            // is determined by Kc. For visualization, we normalize to reasonable display values.
+            
+            // At equilibrium, if we assume a reference concentration scale:
+            // For Kc >> 1: products dominate
+            // For Kc << 1: reactants dominate
+            // For Kc ≈ 1: roughly equal
+            
+            // Use log scale to determine equilibrium position
+            let logKc = Math.log10(Math.max(Kc, 1e-30));
+            
+            // Map logKc to equilibrium concentrations
+            // logKc of +6 means very product-favored
+            // logKc of -6 means very reactant-favored
+            let eqFraction = 0.5 + 0.4 * Math.tanh(logKc / 4); // Maps to 0.1-0.9 range
+            
+            // Equilibrium concentrations (what the system tends toward)
+            let eqProductConc = eqFraction;
+            let eqReactantConc = 1 - eqFraction;
+            
+            // Current concentrations based on current state
+            let volumeFactor = 1 / params.volume;
+            
+            // The deviation from equilibrium based on current reactantConc/productConc
+            // At equilibrium, params.reactantConc and params.productConc should match the K-determined values
+            let baseConc = 1.0; // Reference concentration (1 M)
+            
+            let reactantConcs = {};
+            let productConcs = {};
+            let kcValuesHtml = '';
+            
+            // Calculate current concentrations for display
+            kcReactants.forEach(s => {
+                let conc = baseConc * (params.reactantConc * 2) * volumeFactor;
+                reactantConcs[s.formula] = { conc: conc, coeff: s.coeff };
+                kcValuesHtml += `<div class="value-item">
+                    <span class="label" style="color: ${s.color}">[${s.formula}]</span>
+                    <span class="number">${conc.toExponential(2)} M</span>
+                </div>`;
+            });
+            
+            kcProducts.forEach(s => {
+                let conc = baseConc * (params.productConc * 2) * volumeFactor;
+                productConcs[s.formula] = { conc: conc, coeff: s.coeff };
+                kcValuesHtml += `<div class="value-item">
+                    <span class="label" style="color: ${s.color}">[${s.formula}]</span>
+                    <span class="number">${conc.toExponential(2)} M</span>
+                </div>`;
+            });
+            
+            document.getElementById('kc-values').innerHTML = kcValuesHtml;
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // CALCULATE Qc RELATIVE TO K
+            // Q/K ratio indicates how far system is from equilibrium
+            // Q = K at equilibrium, Q < K means forward shift needed, Q > K means reverse shift
+            // ═══════════════════════════════════════════════════════════════════
+            
+            // Calculate how far current state is from equilibrium targets
+            // When at equilibrium: reactantConc = targetReactantConc, productConc = targetProductConc
+            // The Q/K ratio is determined by the displacement from equilibrium
+            
+            let reactantRatio = params.reactantConc / params.targetReactantConc;
+            let productRatio = params.productConc / params.targetProductConc;
+            
+            // Q/K = (product excess)^productCoeffs / (reactant excess)^reactantCoeffs
+            // When both ratios = 1, Q/K = 1 (at equilibrium)
+            // When reactantRatio > 1 (excess reactant), Q/K < 1 (Q < K, forward shift)
+            // When productRatio > 1 (excess product), Q/K > 1 (Q > K, reverse shift)
+            let qOverK = Math.pow(productRatio, totalProductCoeffs) / Math.pow(reactantRatio, totalReactantCoeffs);
+            
+            let Qc = Kc * qOverK;
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // DISPLAY VALUES - USE LOGARITHMIC SCALE
+            // ═══════════════════════════════════════════════════════════════════
+            
+            let logQ = Math.log10(Math.max(Qc, 1e-30));
+            let logK = Math.log10(Math.max(Kc, 1e-30));
+            
+            document.getElementById('logq-value').textContent = logQ.toFixed(2);
+            document.getElementById('logk-value').textContent = logK.toFixed(2);
+            
+            // Display raw values in scientific notation
+            document.getElementById('qc-value').textContent = Qc.toExponential(2);
+            document.getElementById('kc-value').textContent = Kc.toExponential(2);
+            
+            // Build Kc expression
+            let kcNumerator = kcProducts.map(s => 
+                `<span style="color: ${s.color}">[${s.formula}]</span>${s.coeff > 1 ? `<sup>${s.coeff}</sup>` : ''}`
+            ).join(' · ') || '1';
+            
+            let kcDenominator = kcReactants.map(s => 
+                `<span style="color: ${s.color}">[${s.formula}]</span>${s.coeff > 1 ? `<sup>${s.coeff}</sup>` : ''}`
+            ).join(' · ') || '1';
+            
+            let kcExpression = `K<sub>c</sub> = ${kcNumerator} / ${kcDenominator}`;
+            document.getElementById('kc-expression').innerHTML = kcExpression;
+            
+            // Update Q vs K comparison
+            let comparator = document.getElementById('q-k-comparator');
+            let status = document.getElementById('q-k-status');
+            
+            let logDiff = logQ - logK;
+            
+            if (params.shiftDirection === 0 || Math.abs(logDiff) < 0.1) {
+                comparator.textContent = '≈';
+                comparator.className = 'q-k-comparator equilibrium';
+                status.textContent = 'At Equilibrium (log Q ≈ log K)';
+                status.className = 'q-k-status equilibrium';
+            } else if (logQ < logK) {
+                comparator.textContent = '<';
+                comparator.className = 'q-k-comparator forward';
+                status.textContent = `log Q < log K (Δ = ${logDiff.toFixed(1)}) → Shifting FORWARD`;
+                status.className = 'q-k-status forward';
+            } else {
+                comparator.textContent = '>';
+                comparator.className = 'q-k-comparator reverse';
+                status.textContent = `log Q > log K (Δ = +${logDiff.toFixed(1)}) → Shifting REVERSE`;
+                status.className = 'q-k-status reverse';
+            }
+            
+            // Van't Hoff info
+            let vantHoffInfo = document.getElementById('vant-hoff-info');
+            let tempEffect = reaction.deltaH < 0 ? 
+                "Exothermic: ↑T → ↓K (less products)" : 
+                "Endothermic: ↑T → ↑K (more products)";
+            vantHoffInfo.innerHTML = `
+                <div>K at ${params.temperature}K calculated via van't Hoff equation</div>
+                <div class="formula">ln(K₂/K₁) = -ΔH°/R × (1/T₂ - 1/T₁)</div>
+                <div>${tempEffect}</div>
+            `;
+            
+            // ═══════════════════════════════════════════════════════════════════
+            // CALCULATE Kp FOR GAS REACTIONS
+            // ═══════════════════════════════════════════════════════════════════
+            
+            let hasGases = reaction.reactants.some(s => s.state === 'g') ||
+                          reaction.products.some(s => s.state === 'g');
+            
+            let kpSection = document.getElementById('kp-section');
+            
+            if (hasGases) {
+                kpSection.style.display = 'block';
+                
+                let kpReactants = reaction.reactants.filter(s => s.state === 'g');
+                let kpProducts = reaction.products.filter(s => s.state === 'g');
+                
+                let kpNumerator = kpProducts.map(s => 
+                    `<span style="color: ${s.color}">P<sub>${s.formula}</sub></span>${s.coeff > 1 ? `<sup>${s.coeff}</sup>` : ''}`
+                ).join(' · ') || '1';
+                
+                let kpDenominator = kpReactants.map(s => 
+                    `<span style="color: ${s.color}">P<sub>${s.formula}</sub></span>${s.coeff > 1 ? `<sup>${s.coeff}</sup>` : ''}`
+                ).join(' · ') || '1';
+                
+                let kpExpression = `K<sub>p</sub> = ${kpNumerator} / ${kpDenominator}`;
+                document.getElementById('kp-expression').innerHTML = kpExpression;
+                
+                // Calculate Kp from Kc using Kp = Kc(RT)^Δn
+                let deltaN = reaction.gasChange;
+                let Rgas = 0.0821; // L·atm/(mol·K)
+                let Kp = Kc * Math.pow(Rgas * params.temperature, deltaN);
+                
+                document.getElementById('kp-calculated-value').textContent = Kp.toExponential(2);
+                document.getElementById('kp-relation').innerHTML = 
+                    `K<sub>p</sub> = K<sub>c</sub>(RT)<sup>Δn</sup>, Δn = ${deltaN >= 0 ? '+' : ''}${deltaN}`;
+                
+                // Calculate partial pressures
+                let totalPressure = params.pressure;
+                let totalReactantMoles = kpReactants.reduce((sum, s) => sum + s.coeff * params.reactantConc, 0);
+                let totalProductMoles = kpProducts.reduce((sum, s) => sum + s.coeff * params.productConc, 0);
+                let totalMoles = totalReactantMoles + totalProductMoles || 1;
+                
+                let kpValuesHtml = '';
+                
+                kpReactants.forEach(s => {
+                    let moleFrac = (s.coeff * params.reactantConc) / totalMoles;
+                    let partialP = moleFrac * totalPressure;
+                    kpValuesHtml += `<div class="value-item">
+                        <span class="label" style="color: ${s.color}">P<sub>${s.formula}</sub></span>
+                        <span class="number">${partialP.toFixed(3)} atm</span>
+                    </div>`;
+                });
+                
+                kpProducts.forEach(s => {
+                    let moleFrac = (s.coeff * params.productConc) / totalMoles;
+                    let partialP = moleFrac * totalPressure;
+                    kpValuesHtml += `<div class="value-item">
+                        <span class="label" style="color: ${s.color}">P<sub>${s.formula}</sub></span>
+                        <span class="number">${partialP.toFixed(3)} atm</span>
+                    </div>`;
+                });
+                
+                document.getElementById('kp-values').innerHTML = kpValuesHtml;
+                
+            } else {
+                kpSection.style.display = 'none';
+            }
+        }
+
+        function updateEquilibriumIndicator() {
+            let status = document.getElementById('eq-status');
+            let leftArrow = document.getElementById('arrow-left');
+            let rightArrow = document.getElementById('arrow-right');
+            
+            if (!status || !leftArrow || !rightArrow) return;
+            
+            if (params.shiftDirection > 0) {
+                status.textContent = "Shifting Forward →";
+                status.style.color = "#b87a6a";
+                rightArrow.style.opacity = "1";
+                rightArrow.style.transform = "scale(1.3)";
+                leftArrow.style.opacity = "0.3";
+                leftArrow.style.transform = "scale(1)";
+            } else if (params.shiftDirection < 0) {
+                status.textContent = "← Shifting Backward";
+                status.style.color = "#5a8a87";
+                leftArrow.style.opacity = "1";
+                leftArrow.style.transform = "scale(1.3)";
+                rightArrow.style.opacity = "0.3";
+                rightArrow.style.transform = "scale(1)";
+            } else {
+                status.textContent = "At Equilibrium";
+                status.style.color = "#c4a35a";
+                leftArrow.style.opacity = "0.6";
+                leftArrow.style.transform = "scale(1)";
+                rightArrow.style.opacity = "0.6";
+                rightArrow.style.transform = "scale(1)";
+            }
+            
+            // Update total particle counts
+            let reactantParticles = particles.filter(p => p.side === 'reactant');
+            let productParticles = particles.filter(p => p.side === 'product');
+            
+            let reactantCountEl = document.getElementById('reactant-count');
+            let productCountEl = document.getElementById('product-count');
+            if (reactantCountEl) reactantCountEl.textContent = reactantParticles.length;
+            if (productCountEl) productCountEl.textContent = productParticles.length;
+            
+            // Update molecule breakdown
+            let reaction = params.currentReaction;
+            let breakdownEl = document.getElementById('molecule-breakdown');
+            if (reaction && breakdownEl) {
+                let breakdownHtml = '';
+                
+                // Count each reactant species
+                reaction.reactants.forEach(species => {
+                    let count = reactantParticles.filter(p => p.species.formula === species.formula).length;
+                    breakdownHtml += `<span class="molecule-count-chip" style="border-color: ${species.color}40;">
+                        <span class="mol-formula" style="color: ${species.color}">${species.formula}</span>
+                        <span class="mol-count" style="color: ${species.color}">${count}</span>
+                    </span>`;
+                });
+                
+                // Add separator
+                breakdownHtml += '<span style="color: #999; margin: 0 4px;">⇌</span>';
+                
+                // Count each product species
+                reaction.products.forEach(species => {
+                    let count = productParticles.filter(p => p.species.formula === species.formula).length;
+                    breakdownHtml += `<span class="molecule-count-chip" style="border-color: ${species.color}40;">
+                        <span class="mol-formula" style="color: ${species.color}">${species.formula}</span>
+                        <span class="mol-count" style="color: ${species.color}">${count}</span>
+                    </span>`;
+                });
+                
+                breakdownEl.innerHTML = breakdownHtml;
+            }
+        }
+
+        function updateExplanation(html) {
+            let el = document.getElementById('explanation');
+            if (el) el.innerHTML = html;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SPECIFIC MOLECULE CONTROLS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSpecificMoleculeButtons() {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            let grid = document.getElementById('specific-molecules-grid');
+            if (!grid) return;
+            
+            let html = '';
+            
+            // Add reactant molecules
+            reaction.reactants.forEach((species, index) => {
+                // Skip pure liquids and solids (they don't affect equilibrium)
+                let canModify = species.state === 'g' || species.state === 'aq';
+                html += `
+                    <div class="molecule-row reactant-row">
+                        <span class="molecule-name" style="color: ${species.color}">${species.formula}</span>
+                        <span class="molecule-count">(${species.state})</span>
+                        ${canModify ? `
+                            <button class="molecule-btn add" onclick="addSpecificMolecule(${index}, 'reactant')" title="Add ${species.formula}">+</button>
+                            <button class="molecule-btn remove" onclick="removeSpecificMolecule(${index}, 'reactant')" title="Remove ${species.formula}">−</button>
+                        ` : `<span style="font-size: 10px; color: #999;">fixed</span>`}
+                    </div>
+                `;
+            });
+            
+            // Add separator
+            html += '<div style="text-align: center; color: #999; font-size: 11px; margin: 4px 0;">⇌</div>';
+            
+            // Add product molecules
+            reaction.products.forEach((species, index) => {
+                let canModify = species.state === 'g' || species.state === 'aq';
+                html += `
+                    <div class="molecule-row product-row">
+                        <span class="molecule-name" style="color: ${species.color}">${species.formula}</span>
+                        <span class="molecule-count">(${species.state})</span>
+                        ${canModify ? `
+                            <button class="molecule-btn add" onclick="addSpecificMolecule(${index}, 'product')" title="Add ${species.formula}">+</button>
+                            <button class="molecule-btn remove" onclick="removeSpecificMolecule(${index}, 'product')" title="Remove ${species.formula}">−</button>
+                        ` : `<span style="font-size: 10px; color: #999;">fixed</span>`}
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        function addSpecificMolecule(speciesIndex, side) {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            let species = side === 'reactant' ? reaction.reactants[speciesIndex] : reaction.products[speciesIndex];
+            let amount = 0.08; // Amount to add per click
+            
+            if (side === 'reactant') {
+                // Adding reactant: only reactantConc increases, productConc stays same
+                params.reactantConc += amount;
+                
+                // New equilibrium with increased total
+                let newTotal = params.reactantConc + params.productConc;
+                params.targetReactantConc = newTotal * params.eqReactantFrac;
+                params.targetProductConc = newTotal * params.eqProductFrac;
+                
+                params.shiftDirection = 1; // Forward shift
+                
+                updateExplanation(`Added <strong style="color: ${species.color}">${species.formula}</strong>! More reactant means <strong>Q < K</strong>, so the system shifts <strong>forward (→)</strong> to restore equilibrium.`);
+            } else {
+                // Adding product: only productConc increases, reactantConc stays same
+                params.productConc += amount;
+                
+                // New equilibrium with increased total
+                let newTotal = params.reactantConc + params.productConc;
+                params.targetReactantConc = newTotal * params.eqReactantFrac;
+                params.targetProductConc = newTotal * params.eqProductFrac;
+                
+                params.shiftDirection = -1; // Backward shift
+                
+                updateExplanation(`Added <strong style="color: ${species.color}">${species.formula}</strong>! More product means <strong>Q > K</strong>, so the system shifts <strong>backward (←)</strong> to restore equilibrium.`);
+            }
+            
+            updateEquilibriumConstants();
+        }
+
+        function removeSpecificMolecule(speciesIndex, side) {
+            let reaction = params.currentReaction;
+            if (!reaction) return;
+            
+            let species = side === 'reactant' ? reaction.reactants[speciesIndex] : reaction.products[speciesIndex];
+            let amount = 0.08; // Amount to remove per click
+            
+            if (side === 'reactant') {
+                // Removing reactant: only reactantConc decreases, productConc stays same
+                params.reactantConc = Math.max(0.05, params.reactantConc - amount);
+                
+                // New equilibrium with decreased total
+                let newTotal = params.reactantConc + params.productConc;
+                params.targetReactantConc = newTotal * params.eqReactantFrac;
+                params.targetProductConc = newTotal * params.eqProductFrac;
+                
+                params.shiftDirection = -1; // Backward shift
+                
+                updateExplanation(`Removed <strong style="color: ${species.color}">${species.formula}</strong>! Less reactant means <strong>Q > K</strong>, so the system shifts <strong>backward (←)</strong> to restore equilibrium.`);
+            } else {
+                // Removing product: only productConc decreases, reactantConc stays same
+                params.productConc = Math.max(0.05, params.productConc - amount);
+                
+                // New equilibrium with decreased total
+                let newTotal = params.reactantConc + params.productConc;
+                params.targetReactantConc = newTotal * params.eqReactantFrac;
+                params.targetProductConc = newTotal * params.eqProductFrac;
+                
+                params.shiftDirection = 1; // Forward shift
+                
+                updateExplanation(`Removed <strong style="color: ${species.color}">${species.formula}</strong>! Less product means <strong>Q < K</strong>, so the system shifts <strong>forward (→)</strong> to restore equilibrium.`);
+            }
+            
+            updateEquilibriumConstants();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // ACCORDION NAVIGATION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function toggleAccordion(sectionName) {
+            const section = document.getElementById('section-' + sectionName);
+            if (section) {
+                section.classList.toggle('open');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // WINDOW RESIZE
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function windowResized() {
+            // Responsive canvas sizing
+            let isMobile = windowWidth <= 1024;
+            if (isMobile) {
+                canvasWidth = min(windowWidth - 24, 900);
+                canvasHeight = min(windowHeight * 0.4, 400);
+            } else {
+                canvasWidth = min(windowWidth - 480, 900);
+                canvasHeight = min(windowHeight - 60, 700);
+            }
+            resizeCanvas(canvasWidth, canvasHeight);
+            dividerX = canvasWidth / 2;
+        }
+    </script>
+</body>
+</html>

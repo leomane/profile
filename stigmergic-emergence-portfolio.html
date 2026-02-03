@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stigmergic Emergence | Tony Leo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0c0a;
+            --text: #e8e4dc;
+            --text-dim: #4a4845;
+            --accent: #c4a35a;
+            --teal: #5a8a87;
+            --coral: #b87a6a;
+            --lavender: #8a7a9a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: none;
+            min-height: 100vh;
+        }
+
+        /* Custom cursor */
+        .cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.3s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor.expanded {
+            width: 60px;
+            height: 60px;
+            border-color: var(--accent);
+            background: rgba(196, 163, 90, 0.1);
+        }
+
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: background 0.3s ease;
+        }
+
+        .cursor-dot.expanded {
+            background: var(--accent);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        /* Sidebar - now horizontal below canvas */
+        .sidebar {
+            width: 100%;
+            flex-shrink: 0;
+            padding: 2rem;
+            background: rgba(13, 12, 10, 0.8);
+            border: 1px solid rgba(90, 138, 135, 0.1);
+            overflow-y: visible;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--teal), var(--accent));
+        }
+
+        .sidebar-header {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .sidebar .subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--teal);
+        }
+
+        .sidebar .description {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            opacity: 0.7;
+            flex-basis: 100%;
+            max-width: 600px;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        /* Seed Controls */
+        .seed-input {
+            width: 100%;
+            background: rgba(90, 138, 135, 0.05);
+            padding: 0.75rem;
+            border: 1px solid rgba(90, 138, 135, 0.2);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .seed-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(196, 163, 90, 0.05);
+        }
+
+        .seed-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Parameter Controls */
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 2px;
+            background: var(--text-dim);
+            border-radius: 0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--teal);
+            border-radius: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--accent);
+            transform: scale(1.2);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: var(--teal);
+            border-radius: 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .value-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Color Pickers */
+        .color-group {
+            margin-bottom: 1rem;
+        }
+
+        .color-group label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .color-picker-container input[type="color"] {
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(90, 138, 135, 0.2);
+            border-radius: 0;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .color-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+
+        /* Buttons */
+        .button {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(90, 138, 135, 0.3);
+            padding: 0.6rem 1rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--teal);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+
+        .button:hover {
+            border-color: var(--teal);
+            color: var(--bg);
+        }
+
+        .button:hover::before {
+            transform: translateX(0);
+        }
+
+        .button.accent::before {
+            background: var(--accent);
+        }
+
+        .button.accent:hover {
+            border-color: var(--accent);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .button-row .button {
+            flex: 1;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            position: relative;
+            order: -1; /* Move canvas above sidebar */
+        }
+
+        #canvas-container {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            border: 1px solid rgba(90, 138, 135, 0.1);
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 100px;
+        }
+
+        .loading::before {
+            content: '// ';
+            color: var(--teal);
+        }
+
+        /* Back link */
+        .back-link {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-link:hover {
+            color: var(--accent);
+        }
+
+        .back-link::before {
+            content: '← ';
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar {
+                grid-template-columns: 1fr;
+            }
+
+            .back-link {
+                position: relative;
+                top: 0;
+                right: 0;
+                display: block;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
+
+    <a href="index.html" class="back-link">Back to Portfolio</a>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Stigmergic Emergence</h1>
+                <div class="subtitle">// Ant Colony Optimization</div>
+                <p class="description">Decentralized intelligence emerging from simple rules. Autonomous agents deposit pheromone trails that evaporate over time, creating self-organizing pathways through pure emergent behavior.</p>
+            </div>
+
+            <div class="control-section">
+                <h3>Seed</h3>
+                <input type="number" id="seed-input" class="seed-input" value="12345" onchange="updateSeed()">
+                <div class="seed-controls">
+                    <button class="button" onclick="previousSeed()">← Prev</button>
+                    <button class="button" onclick="nextSeed()">Next →</button>
+                </div>
+                <button class="button accent" onclick="randomSeedAndUpdate()">↻ Random Seed</button>
+            </div>
+
+            <div class="control-section">
+                <h3>Colony</h3>
+                
+                <div class="control-group">
+                    <label>Ant Count</label>
+                    <div class="slider-container">
+                        <input type="range" id="antCount" min="100" max="2000" step="100" value="800" oninput="updateParam('antCount', this.value)">
+                        <span class="value-display" id="antCount-value">800</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Food Sources</label>
+                    <div class="slider-container">
+                        <input type="range" id="foodSources" min="1" max="8" step="1" value="4" oninput="updateParam('foodSources', this.value)">
+                        <span class="value-display" id="foodSources-value">4</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Exploration Bias</label>
+                    <div class="slider-container">
+                        <input type="range" id="explorationBias" min="0.05" max="0.5" step="0.05" value="0.2" oninput="updateParam('explorationBias', this.value)">
+                        <span class="value-display" id="explorationBias-value">0.2</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Pheromones</h3>
+
+                <div class="control-group">
+                    <label>Pheromone Strength</label>
+                    <div class="slider-container">
+                        <input type="range" id="pheromoneStrength" min="5" max="50" step="5" value="20" oninput="updateParam('pheromoneStrength', this.value)">
+                        <span class="value-display" id="pheromoneStrength-value">20</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Evaporation Rate</label>
+                    <div class="slider-container">
+                        <input type="range" id="evaporationRate" min="0.990" max="0.999" step="0.001" value="0.995" oninput="updateParam('evaporationRate', this.value)">
+                        <span class="value-display" id="evaporationRate-value">0.995</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Diffusion Rate</label>
+                    <div class="slider-container">
+                        <input type="range" id="diffusionRate" min="0.05" max="0.3" step="0.01" value="0.15" oninput="updateParam('diffusionRate', this.value)">
+                        <span class="value-display" id="diffusionRate-value">0.15</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Colors</h3>
+                
+                <div class="color-group">
+                    <label>Trail (Sparse)</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color1" value="#c4a35a" onchange="updateColor('color1', this.value)">
+                        <span class="color-value" id="color1-value">#c4a35a</span>
+                    </div>
+                </div>
+
+                <div class="color-group">
+                    <label>Trail (Dense)</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color2" value="#b87a6a" onchange="updateColor('color2', this.value)">
+                        <span class="color-value" id="color2-value">#b87a6a</span>
+                    </div>
+                </div>
+
+                <div class="color-group">
+                    <label>Food Source</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color3" value="#5a8a87" onchange="updateColor('color3', this.value)">
+                        <span class="color-value" id="color3-value">#5a8a87</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>Actions</h3>
+                <div class="button-row">
+                    <button class="button" onclick="resetParameters()">Reset</button>
+                    <button class="button accent" onclick="downloadImage()">Download</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">Initializing colony simulation</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // CUSTOM CURSOR
+        // ═══════════════════════════════════════════════════════════════════════
+
+        const cursor = document.querySelector('.cursor');
+        const cursorDot = document.querySelector('.cursor-dot');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            cursorDot.style.left = e.clientX - 2 + 'px';
+            cursorDot.style.top = e.clientY - 2 + 'px';
+        });
+
+        document.querySelectorAll('button, a, input').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.classList.add('expanded');
+                cursorDot.classList.add('expanded');
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.classList.remove('expanded');
+                cursorDot.classList.remove('expanded');
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PARAMETERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            seed: 12345,
+            antCount: 800,
+            pheromoneStrength: 20,
+            evaporationRate: 0.995,
+            diffusionRate: 0.15,
+            foodSources: 4,
+            explorationBias: 0.2,
+            colorPalette: ['#c4a35a', '#b87a6a', '#5a8a87']
+        };
+
+        let defaultParams = JSON.parse(JSON.stringify(params));
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // COLONY SIMULATION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let ants = [];
+        let pheromoneField;
+        let pheromoneFieldNext;
+        let foodSources = [];
+        let nestPosition;
+        let gridSize = 4;
+        let cols, rows;
+        let maxPheromone = 255;
+        let initialFoodAmount = 100;
+        let foodRegenerationRate = 0.02;
+
+        function setup() {
+            let canvas = createCanvas(800, 800);
+            canvas.parent('canvas-container');
+            pixelDensity(1);
+            
+            initializeSystem();
+            
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function initializeSystem() {
+            randomSeed(params.seed);
+            noiseSeed(params.seed);
+
+            cols = floor(width / gridSize);
+            rows = floor(height / gridSize);
+
+            pheromoneField = new Float32Array(cols * rows);
+            pheromoneFieldNext = new Float32Array(cols * rows);
+
+            nestPosition = createVector(width / 2, height / 2);
+
+            foodSources = [];
+            for (let i = 0; i < params.foodSources; i++) {
+                createFoodSource(true);
+            }
+
+            ants = [];
+            for (let i = 0; i < params.antCount; i++) {
+                ants.push(new Ant());
+            }
+
+            // Dark background matching portfolio
+            background(13, 12, 10);
+        }
+
+        function createFoodSource(initialPlacement = false) {
+            let fx, fy;
+            
+            if (initialPlacement && foodSources.length < params.foodSources) {
+                let angle = (TWO_PI / params.foodSources) * foodSources.length + random(-0.3, 0.3);
+                let dist = random(150, 320);
+                fx = width / 2 + cos(angle) * dist;
+                fy = height / 2 + sin(angle) * dist;
+            } else {
+                let attempts = 0;
+                do {
+                    fx = random(80, width - 80);
+                    fy = random(80, height - 80);
+                    attempts++;
+                } while (dist(fx, fy, nestPosition.x, nestPosition.y) < 120 && attempts < 50);
+            }
+            
+            foodSources.push({
+                pos: createVector(fx, fy),
+                amount: initialFoodAmount,
+                maxAmount: initialFoodAmount,
+                depleting: false
+            });
+        }
+
+        function updateFoodSources() {
+            foodSources = foodSources.filter(food => food.amount > 0);
+            
+            let targetCount = params.foodSources;
+            let currentCount = foodSources.length;
+            
+            if (currentCount < targetCount) {
+                let spawnChance = foodRegenerationRate * (targetCount - currentCount);
+                if (random() < spawnChance) {
+                    createFoodSource(false);
+                }
+            }
+        }
+
+        function draw() {
+            // Dark background fade
+            noStroke();
+            fill(13, 12, 10, 12);
+            rect(0, 0, width, height);
+
+            updateFoodSources();
+            diffusePheromones();
+
+            for (let ant of ants) {
+                ant.update();
+                ant.display();
+            }
+
+            renderPheromones();
+            drawFoodSources();
+            drawNest();
+        }
+
+        function diffusePheromones() {
+            let diffusion = params.diffusionRate;
+            let evaporation = params.evaporationRate;
+
+            for (let x = 1; x < cols - 1; x++) {
+                for (let y = 1; y < rows - 1; y++) {
+                    let idx = x + y * cols;
+                    
+                    let sum = 0;
+                    sum += pheromoneField[idx - 1];
+                    sum += pheromoneField[idx + 1];
+                    sum += pheromoneField[idx - cols];
+                    sum += pheromoneField[idx + cols];
+                    sum += pheromoneField[idx - 1 - cols];
+                    sum += pheromoneField[idx + 1 - cols];
+                    sum += pheromoneField[idx - 1 + cols];
+                    sum += pheromoneField[idx + 1 + cols];
+
+                    let center = pheromoneField[idx];
+                    let diffused = center * (1 - diffusion) + (sum / 8) * diffusion;
+                    pheromoneFieldNext[idx] = diffused * evaporation;
+                }
+            }
+
+            let temp = pheromoneField;
+            pheromoneField = pheromoneFieldNext;
+            pheromoneFieldNext = temp;
+        }
+
+        function renderPheromones() {
+            loadPixels();
+            
+            let col1 = hexToRgb(params.colorPalette[0]);
+            let col2 = hexToRgb(params.colorPalette[1]);
+            let bgColor = { r: 13, g: 12, b: 10 };
+
+            for (let x = 0; x < cols; x++) {
+                for (let y = 0; y < rows; y++) {
+                    let idx = x + y * cols;
+                    let pheromone = pheromoneField[idx];
+                    
+                    if (pheromone > 0.5) {
+                        let normalized = constrain(pheromone / maxPheromone, 0, 1);
+                        let intensity = pow(normalized, 0.5);
+                        
+                        let r = lerp(col1.r, col2.r, intensity);
+                        let g = lerp(col1.g, col2.g, intensity);
+                        let b = lerp(col1.b, col2.b, intensity);
+                        
+                        let alpha = constrain(intensity * 2, 0, 1);
+                        r = lerp(bgColor.r, r, alpha);
+                        g = lerp(bgColor.g, g, alpha);
+                        b = lerp(bgColor.b, b, alpha);
+
+                        for (let px = 0; px < gridSize; px++) {
+                            for (let py = 0; py < gridSize; py++) {
+                                let screenX = x * gridSize + px;
+                                let screenY = y * gridSize + py;
+                                if (screenX < width && screenY < height) {
+                                    let pIdx = (screenX + screenY * width) * 4;
+                                    pixels[pIdx] = r;
+                                    pixels[pIdx + 1] = g;
+                                    pixels[pIdx + 2] = b;
+                                    pixels[pIdx + 3] = 255;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            updatePixels();
+        }
+
+        function drawFoodSources() {
+            let foodCol = hexToRgb(params.colorPalette[2]);
+            noStroke();
+            
+            for (let food of foodSources) {
+                let sizeFactor = map(food.amount, 0, food.maxAmount, 0.3, 1);
+                let baseRadius = 30 * sizeFactor;
+                
+                // Outer glow
+                for (let r = baseRadius; r > 0; r -= 5) {
+                    let alpha = map(r, baseRadius, 0, 20 * sizeFactor, 120 * sizeFactor);
+                    fill(foodCol.r, foodCol.g, foodCol.b, alpha);
+                    ellipse(food.pos.x, food.pos.y, r * 2);
+                }
+                
+                if (food.depleting) {
+                    let pulse = sin(frameCount * 0.2) * 0.3 + 0.7;
+                    fill(232, 228, 220, 30 * pulse);
+                    ellipse(food.pos.x, food.pos.y, baseRadius * 1.5);
+                    food.depleting = false;
+                }
+            }
+        }
+
+        function drawNest() {
+            // Nest with lavender tint
+            noStroke();
+            for (let r = 40; r > 0; r -= 4) {
+                let alpha = map(r, 40, 0, 30, 150);
+                fill(138, 122, 154, alpha);
+                ellipse(nestPosition.x, nestPosition.y, r * 2);
+            }
+            
+            // Inner core
+            fill(232, 228, 220, 50);
+            ellipse(nestPosition.x, nestPosition.y, 12);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // ANT CLASS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        class Ant {
+            constructor() {
+                this.pos = createVector(nestPosition.x + random(-20, 20), nestPosition.y + random(-20, 20));
+                this.vel = p5.Vector.random2D().mult(2);
+                this.hasFood = false;
+                this.targetFood = null;
+                this.wanderAngle = random(TWO_PI);
+                this.speed = random(1.5, 2.5);
+            }
+
+            update() {
+                let desiredDir = this.sense();
+                
+                this.wanderAngle += random(-0.3, 0.3);
+                let wanderForce = createVector(cos(this.wanderAngle), sin(this.wanderAngle));
+                
+                let explorationWeight = params.explorationBias;
+                if (this.hasFood) {
+                    explorationWeight *= 0.3;
+                }
+                
+                let finalDir = p5.Vector.lerp(desiredDir, wanderForce, explorationWeight);
+                finalDir.normalize().mult(this.speed);
+                
+                this.vel.lerp(finalDir, 0.1);
+                this.vel.limit(this.speed);
+                this.pos.add(this.vel);
+
+                if (this.pos.x < 0) this.pos.x = width;
+                if (this.pos.x > width) this.pos.x = 0;
+                if (this.pos.y < 0) this.pos.y = height;
+                if (this.pos.y > height) this.pos.y = 0;
+
+                if (!this.hasFood) {
+                    for (let food of foodSources) {
+                        if (food.amount > 0 && p5.Vector.dist(this.pos, food.pos) < 25) {
+                            this.hasFood = true;
+                            this.targetFood = food.pos.copy();
+                            food.amount -= 1;
+                            food.depleting = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (this.hasFood && p5.Vector.dist(this.pos, nestPosition) < 30) {
+                    this.hasFood = false;
+                    this.targetFood = null;
+                }
+
+                this.depositPheromone();
+            }
+
+            sense() {
+                if (this.hasFood) {
+                    let toNest = p5.Vector.sub(nestPosition, this.pos);
+                    return toNest.normalize();
+                }
+
+                let ahead = this.vel.copy().normalize().mult(15);
+                let leftAngle = this.vel.heading() - PI / 4;
+                let rightAngle = this.vel.heading() + PI / 4;
+                
+                let left = createVector(cos(leftAngle), sin(leftAngle)).mult(15);
+                let right = createVector(cos(rightAngle), sin(rightAngle)).mult(15);
+
+                let centerSense = this.getPheromoneAt(this.pos.x + ahead.x, this.pos.y + ahead.y);
+                let leftSense = this.getPheromoneAt(this.pos.x + left.x, this.pos.y + left.y);
+                let rightSense = this.getPheromoneAt(this.pos.x + right.x, this.pos.y + right.y);
+
+                let foodAttraction = createVector(0, 0);
+                for (let food of foodSources) {
+                    if (food.amount > 0) {
+                        let toFood = p5.Vector.sub(food.pos, this.pos);
+                        let dist = toFood.mag();
+                        if (dist < 150) {
+                            let amountFactor = food.amount / food.maxAmount;
+                            toFood.normalize().mult(map(dist, 0, 150, 50, 0) * amountFactor);
+                            foodAttraction.add(toFood);
+                        }
+                    }
+                }
+
+                let chosen;
+                if (leftSense > centerSense && leftSense > rightSense) {
+                    chosen = left.normalize();
+                } else if (rightSense > centerSense && rightSense > leftSense) {
+                    chosen = right.normalize();
+                } else {
+                    chosen = ahead.normalize();
+                }
+
+                chosen.add(foodAttraction.mult(0.1));
+                return chosen.normalize();
+            }
+
+            getPheromoneAt(x, y) {
+                let gx = floor(x / gridSize);
+                let gy = floor(y / gridSize);
+                if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
+                    return pheromoneField[gx + gy * cols];
+                }
+                return 0;
+            }
+
+            depositPheromone() {
+                let gx = floor(this.pos.x / gridSize);
+                let gy = floor(this.pos.y / gridSize);
+                
+                if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
+                    let idx = gx + gy * cols;
+                    let deposit = this.hasFood ? params.pheromoneStrength * 2 : params.pheromoneStrength;
+                    pheromoneField[idx] = min(pheromoneField[idx] + deposit, maxPheromone);
+                }
+            }
+
+            display() {
+                // Ants as small warm dots
+                let antColor = this.hasFood ? color(90, 138, 135) : color(74, 72, 69);
+                noStroke();
+                fill(antColor);
+                ellipse(this.pos.x, this.pos.y, 3, 3);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UI CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateParam(paramName, value) {
+            if (paramName === 'antCount') {
+                params.antCount = parseInt(value);
+                document.getElementById('antCount-value').textContent = value;
+                initializeSystem();
+            } else if (paramName === 'pheromoneStrength') {
+                params.pheromoneStrength = parseFloat(value);
+                document.getElementById('pheromoneStrength-value').textContent = value;
+            } else if (paramName === 'evaporationRate') {
+                params.evaporationRate = parseFloat(value);
+                document.getElementById('evaporationRate-value').textContent = value;
+            } else if (paramName === 'diffusionRate') {
+                params.diffusionRate = parseFloat(value);
+                document.getElementById('diffusionRate-value').textContent = value;
+            } else if (paramName === 'foodSources') {
+                params.foodSources = parseInt(value);
+                document.getElementById('foodSources-value').textContent = value;
+            } else if (paramName === 'explorationBias') {
+                params.explorationBias = parseFloat(value);
+                document.getElementById('explorationBias-value').textContent = value;
+            }
+        }
+
+        function updateColor(colorId, value) {
+            if (colorId === 'color1') {
+                params.colorPalette[0] = value;
+                document.getElementById('color1-value').textContent = value;
+            } else if (colorId === 'color2') {
+                params.colorPalette[1] = value;
+                document.getElementById('color2-value').textContent = value;
+            } else if (colorId === 'color3') {
+                params.colorPalette[2] = value;
+                document.getElementById('color3-value').textContent = value;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEED CONTROL FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSeedDisplay() {
+            document.getElementById('seed-input').value = params.seed;
+        }
+
+        function updateSeed() {
+            let input = document.getElementById('seed-input');
+            let newSeed = parseInt(input.value);
+            if (newSeed && newSeed > 0) {
+                params.seed = newSeed;
+                initializeSystem();
+            } else {
+                updateSeedDisplay();
+            }
+        }
+
+        function previousSeed() {
+            params.seed = Math.max(1, params.seed - 1);
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function nextSeed() {
+            params.seed = params.seed + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function randomSeedAndUpdate() {
+            params.seed = Math.floor(Math.random() * 999999) + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function resetParameters() {
+            params = JSON.parse(JSON.stringify(defaultParams));
+            
+            document.getElementById('antCount').value = params.antCount;
+            document.getElementById('antCount-value').textContent = params.antCount;
+            document.getElementById('pheromoneStrength').value = params.pheromoneStrength;
+            document.getElementById('pheromoneStrength-value').textContent = params.pheromoneStrength;
+            document.getElementById('evaporationRate').value = params.evaporationRate;
+            document.getElementById('evaporationRate-value').textContent = params.evaporationRate;
+            document.getElementById('diffusionRate').value = params.diffusionRate;
+            document.getElementById('diffusionRate-value').textContent = params.diffusionRate;
+            document.getElementById('foodSources').value = params.foodSources;
+            document.getElementById('foodSources-value').textContent = params.foodSources;
+            document.getElementById('explorationBias').value = params.explorationBias;
+            document.getElementById('explorationBias-value').textContent = params.explorationBias;
+            
+            document.getElementById('color1').value = params.colorPalette[0];
+            document.getElementById('color1-value').textContent = params.colorPalette[0];
+            document.getElementById('color2').value = params.colorPalette[1];
+            document.getElementById('color2-value').textContent = params.colorPalette[1];
+            document.getElementById('color3').value = params.colorPalette[2];
+            document.getElementById('color3-value').textContent = params.colorPalette[2];
+            
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function downloadImage() {
+            saveCanvas('stigmergic-emergence-' + params.seed, 'png');
+        }
+
+        window.addEventListener('load', function() {
+            updateSeedDisplay();
+        });
+    </script>
+</body>
+</html>

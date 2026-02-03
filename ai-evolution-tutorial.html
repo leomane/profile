@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Evolution of AI | Tony Leo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0c0a;
+            --text: #e8e4dc;
+            --text-dim: #4a4845;
+            --accent: #c4a35a;
+            --teal: #5a8a87;
+            --coral: #b87a6a;
+            --lavender: #8a7a9a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom cursor */
+        .cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.3s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor.expanded {
+            width: 60px;
+            height: 60px;
+            border-color: var(--accent);
+            background: rgba(196, 163, 90, 0.1);
+        }
+
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: background 0.3s ease;
+        }
+
+        .cursor-dot.expanded {
+            background: var(--accent);
+        }
+
+        /* Canvas */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Main container */
+        main {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Back link */
+        .back-link {
+            position: fixed;
+            top: 2rem;
+            left: 5vw;
+            z-index: 100;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--teal);
+        }
+
+        .back-link svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* HERO */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            padding: 0 5vw;
+        }
+
+        .hero-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: slideIn 0.8s ease 0.3s forwards;
+        }
+
+        .hero-label::before {
+            content: '// ';
+            color: var(--text-dim);
+        }
+
+        .hero-title {
+            font-size: clamp(10vw, 18vw, 25vw);
+            font-weight: 700;
+            line-height: 0.85;
+            letter-spacing: -0.04em;
+        }
+
+        .hero-title .line {
+            display: block;
+            overflow: hidden;
+        }
+
+        .hero-title .line:nth-child(2) {
+            color: transparent;
+            -webkit-text-stroke: 2px var(--text);
+            transform: translateX(5vw);
+        }
+
+        .hero-title .line:nth-child(3) {
+            color: var(--accent);
+            transform: translateX(10vw);
+            font-size: 0.6em;
+        }
+
+        .hero-title .letter {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(100%) rotate(10deg);
+            animation: letterDrop 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes letterDrop {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+        }
+
+        .hero-title .line:nth-child(1) .letter:nth-child(1) { animation-delay: 0.1s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(2) { animation-delay: 0.15s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(3) { animation-delay: 0.2s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(4) { animation-delay: 0.25s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(5) { animation-delay: 0.3s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(6) { animation-delay: 0.35s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(7) { animation-delay: 0.4s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(8) { animation-delay: 0.45s; }
+        .hero-title .line:nth-child(1) .letter:nth-child(9) { animation-delay: 0.5s; }
+        .hero-title .line:nth-child(2) .letter { animation-delay: 0.6s; }
+        .hero-title .line:nth-child(3) .letter { animation-delay: 0.8s; }
+
+        .hero-subtitle {
+            max-width: 500px;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+            opacity: 0;
+            margin-top: 3rem;
+            animation: fadeIn 1s ease 1s forwards;
+        }
+
+        .hero-descriptor {
+            position: absolute;
+            right: 5vw;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: right;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            writing-mode: vertical-rl;
+            opacity: 0;
+            animation: fadeIn 1s ease 1s forwards;
+        }
+
+        .scroll-prompt {
+            position: absolute;
+            bottom: 5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            opacity: 0;
+            animation: fadeIn 1s ease 1.5s forwards;
+        }
+
+        .scroll-prompt span {
+            display: block;
+            animation: bounce 2s ease infinite;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 0.7; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(5px); }
+        }
+
+        /* TIMELINE SECTION */
+        .timeline-section {
+            padding: 15vh 5vw;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-bg-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(15vw, 25vw, 40vw);
+            font-weight: 700;
+            color: rgba(90, 138, 135, 0.03);
+            white-space: nowrap;
+            pointer-events: none;
+            letter-spacing: -0.05em;
+        }
+
+        .timeline-header {
+            margin-bottom: 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        .section-title em {
+            font-style: italic;
+            color: var(--accent);
+        }
+
+        /* Timeline Grid */
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-event {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            padding: 1rem 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            min-height: 90px;
+        }
+
+        .timeline-event::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--teal), var(--accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-event:hover::before,
+        .timeline-event.active::before {
+            transform: scaleX(1);
+        }
+
+        .timeline-event:hover {
+            background: rgba(90, 138, 135, 0.08);
+            border-color: rgba(90, 138, 135, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .timeline-event.active {
+            background: rgba(196, 163, 90, 0.1);
+            border-color: rgba(196, 163, 90, 0.3);
+        }
+
+        .timeline-event.milestone {
+            border-color: rgba(90, 138, 135, 0.15);
+        }
+
+        .timeline-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-event:hover .timeline-dot,
+        .timeline-event.active .timeline-dot {
+            background: var(--accent);
+            box-shadow: 0 0 15px rgba(196, 163, 90, 0.5);
+            transform: scale(1.3);
+        }
+
+        .timeline-event.milestone .timeline-dot {
+            background: var(--teal);
+            width: 10px;
+            height: 10px;
+        }
+
+        .timeline-event.milestone:hover .timeline-dot,
+        .timeline-event.milestone.active .timeline-dot {
+            background: var(--accent);
+        }
+
+        .timeline-year {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .timeline-event:hover .timeline-year,
+        .timeline-event.active .timeline-year {
+            color: var(--accent);
+        }
+
+        .timeline-name {
+            font-size: 0.6rem;
+            text-align: center;
+            color: var(--text);
+            opacity: 0.6;
+            line-height: 1.3;
+            transition: opacity 0.3s ease;
+        }
+
+        .timeline-event:hover .timeline-name,
+        .timeline-event.active .timeline-name {
+            opacity: 1;
+        }
+
+        /* Timeline Detail Panel */
+        .timeline-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+            opacity: 0;
+            background: rgba(13, 12, 10, 0.8);
+            border: 1px solid rgba(90, 138, 135, 0.2);
+            margin-top: 0;
+        }
+
+        .timeline-detail.active {
+            max-height: 500px;
+            opacity: 1;
+            padding: 2.5rem;
+            margin-top: 2rem;
+        }
+
+        .timeline-detail-inner {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .timeline-detail-year {
+            font-family: 'Space Mono', monospace;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            color: transparent;
+            -webkit-text-stroke: 2px var(--teal);
+            line-height: 1;
+        }
+
+        .timeline-detail-content {
+            max-width: 600px;
+        }
+
+        .timeline-detail-name {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .timeline-detail-tagline {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .timeline-detail-desc {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text);
+            opacity: 0.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-detail-relevance {
+            padding: 1rem 1.5rem;
+            background: rgba(90, 138, 135, 0.08);
+            border-left: 3px solid var(--teal);
+        }
+
+        .timeline-detail-relevance h4 {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-detail-relevance p {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            opacity: 0.9;
+        }
+
+        .timeline-detail-close {
+            background: none;
+            border: 1px solid var(--text-dim);
+            color: var(--text-dim);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .timeline-detail-close:hover {
+            border-color: var(--coral);
+            color: var(--coral);
+            transform: rotate(90deg);
+        }
+
+        .timeline-detail-close svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Timeline hint */
+        .timeline-hint {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            text-align: center;
+            margin-top: 1rem;
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .timeline-hint.hidden {
+            opacity: 0;
+        }
+
+        /* Responsive timeline detail */
+        @media (max-width: 768px) {
+            .timeline-detail-inner {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .timeline-detail-year {
+                font-size: 2rem;
+            }
+            
+            .timeline-detail-close {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+            }
+            
+            .timeline-detail.active {
+                padding: 2rem 1.5rem;
+                position: relative;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .timeline-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .timeline-event {
+                min-height: 80px;
+                padding: 0.75rem 0.25rem;
+            }
+            
+            .timeline-name {
+                font-size: 0.5rem;
+            }
+            
+            .timeline-year {
+                font-size: 0.55rem;
+            }
+        }
+
+        /* EVOLUTION SECTION */
+        .evolution-section {
+            padding: 10vh 5vw;
+        }
+
+        .evolution-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 6rem;
+        }
+
+        .evolution-title {
+            font-size: clamp(4rem, 12vw, 10rem);
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            line-height: 0.9;
+        }
+
+        .evolution-title span {
+            display: block;
+        }
+
+        .evolution-title span:last-child {
+            color: transparent;
+            -webkit-text-stroke: 2px var(--text);
+            margin-left: 10vw;
+        }
+
+        .evolution-count {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            color: var(--text-dim);
+        }
+
+        /* Stage Cards */
+        .stages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .stage-card {
+            position: relative;
+            padding: 4rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.4s ease;
+            overflow: hidden;
+        }
+
+        .stage-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--teal), var(--accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stage-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stage-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(90,138,135,0.08) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .stage-card:hover::after {
+            opacity: 1;
+        }
+
+        .stage-card:hover {
+            transform: translateX(10px);
+            border-color: rgba(90, 138, 135, 0.2);
+        }
+
+        .stage-card:nth-child(2)::after { background: linear-gradient(135deg, rgba(196,163,90,0.08) 0%, transparent 50%); }
+        .stage-card:nth-child(2):hover { border-color: rgba(196, 163, 90, 0.2); }
+        .stage-card:nth-child(3)::after { background: linear-gradient(135deg, rgba(138,122,154,0.08) 0%, transparent 50%); }
+        .stage-card:nth-child(3):hover { border-color: rgba(138, 122, 154, 0.2); }
+        .stage-card:nth-child(4)::after { background: linear-gradient(135deg, rgba(184,122,106,0.08) 0%, transparent 50%); }
+        .stage-card:nth-child(4):hover { border-color: rgba(184, 122, 106, 0.2); }
+        .stage-card:nth-child(5)::after { background: linear-gradient(135deg, rgba(90,138,135,0.08) 0%, transparent 50%); }
+        .stage-card:nth-child(6)::after { background: linear-gradient(135deg, rgba(196,163,90,0.08) 0%, transparent 50%); }
+        .stage-card:nth-child(6):hover { border-color: rgba(196, 163, 90, 0.2); }
+        .stage-card:nth-child(7)::after { background: linear-gradient(135deg, rgba(138,122,154,0.12) 0%, transparent 50%); }
+        .stage-card:nth-child(7):hover { border-color: rgba(138, 122, 154, 0.3); }
+
+        .stage-header {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 2rem;
+            align-items: start;
+            margin-bottom: 2rem;
+        }
+
+        .stage-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+        }
+
+        .stage-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stage-title {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 500;
+            letter-spacing: -0.01em;
+        }
+
+        .stage-era {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            color: var(--teal);
+        }
+
+        .stage-visual {
+            width: 120px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stage-visual svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .stage-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .stage-insight {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(196, 163, 90, 0.05);
+            border-left: 3px solid var(--accent);
+            margin-bottom: 2rem;
+        }
+
+        .stage-insight-icon {
+            font-size: 1.5rem;
+        }
+
+        .stage-insight p {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        .stage-block h4 {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+        }
+
+        .stage-block p {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text);
+            opacity: 0.7;
+        }
+
+        .stage-block.solved {
+            padding: 1.5rem;
+            background: rgba(90, 138, 135, 0.05);
+            border: 1px solid rgba(90, 138, 135, 0.1);
+        }
+
+        .stage-block.solved h4 {
+            color: var(--teal);
+        }
+
+        .stage-block.solved p {
+            opacity: 0.9;
+        }
+
+        .stage-block.limitations ul {
+            list-style: none;
+        }
+
+        .stage-block.limitations li {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            opacity: 0.6;
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .stage-block.limitations li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--coral);
+        }
+
+        /* Connector */
+        .stage-connector {
+            display: flex;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+
+        .connector-line {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .connector-line span {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--text-dim), var(--teal));
+        }
+
+        .connector-line svg {
+            color: var(--teal);
+        }
+
+        /* Tags */
+        .stage-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .stage-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.55rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stage-tag:hover {
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+
+        /* Conclusion Section */
+        .conclusion {
+            padding: 15vh 5vw;
+            position: relative;
+        }
+
+        .conclusion-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2rem;
+        }
+
+        .conclusion-label {
+            grid-column: 1 / 3;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            padding-top: 0.5rem;
+        }
+
+        .conclusion-heading {
+            grid-column: 3 / 12;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 300;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            margin-bottom: 3rem;
+        }
+
+        .conclusion-heading em {
+            font-style: italic;
+            color: var(--teal);
+        }
+
+        .conclusion-text {
+            grid-column: 4 / 10;
+            font-size: 1rem;
+            line-height: 1.9;
+            color: var(--text);
+            opacity: 0.8;
+            margin-bottom: 3rem;
+        }
+
+        .capabilities-grid {
+            grid-column: 3 / 11;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .capability {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(90, 138, 135, 0.03);
+            border: 1px solid rgba(90, 138, 135, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .capability:hover {
+            background: rgba(90, 138, 135, 0.08);
+            border-color: rgba(90, 138, 135, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .capability-icon {
+            font-size: 1.5rem;
+        }
+
+        .capability-text {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .capability-text strong {
+            color: var(--teal);
+        }
+
+        /* Footer */
+        footer {
+            padding: 3rem 5vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        footer a {
+            color: var(--teal);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent);
+        }
+
+        /* Responsive */
+        @media (max-width: 1100px) {
+            .conclusion-heading { grid-column: 2 / 12; }
+            .conclusion-text { grid-column: 2 / 11; }
+            .capabilities-grid { grid-column: 2 / 12; }
+        }
+
+        @media (max-width: 900px) {
+            .back-link { position: relative; top: auto; left: auto; padding: 2rem 6vw; }
+            .hero-content { padding: 0 6vw; }
+            .hero-descriptor { display: none; }
+            .hero-title .line:nth-child(2) { transform: translateX(2vw); }
+            .hero-title .line:nth-child(3) { transform: translateX(4vw); }
+            .timeline-header { padding: 0 6vw; }
+            .timeline-track { padding: 0 6vw; }
+            .evolution-section { padding: 10vh 6vw; }
+            .evolution-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .evolution-title span:last-child { margin-left: 5vw; }
+            .stage-card { padding: 2.5rem; }
+            .stage-header { grid-template-columns: 1fr; gap: 1rem; }
+            .stage-visual { width: 100%; height: 100px; margin-bottom: 1rem; }
+            .stage-content { grid-template-columns: 1fr; gap: 2rem; }
+            .conclusion-grid { display: block; padding: 0; }
+            .conclusion-label { margin-bottom: 1rem; }
+            .conclusion-heading { margin-bottom: 2rem; }
+            .capabilities-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .hero-title { font-size: clamp(12vw, 16vw, 20vw); }
+            .section-title { font-size: clamp(1.5rem, 6vw, 2.5rem); }
+            .evolution-title { font-size: clamp(3rem, 14vw, 5rem); }
+            .stage-title { font-size: clamp(1.2rem, 5vw, 1.8rem); }
+            .stage-card { padding: 1.5rem; }
+            .stage-insight { padding: 1rem; flex-direction: column; text-align: center; }
+            footer { flex-direction: column; gap: 1rem; text-align: center; }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .cursor, .cursor-dot { display: none !important; }
+            body { cursor: auto; }
+            * { cursor: auto; }
+            .stage-tag { padding: 0.5rem 1rem; font-size: 0.6rem; }
+            .capability { padding: 1.2rem; }
+        }
+
+        /* Expand/collapse for mobile */
+        .stage-expand-btn {
+            display: none;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--teal);
+            background: none;
+            border: 1px solid var(--teal);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .stage-expand-btn:hover {
+            background: var(--teal);
+            color: var(--bg);
+        }
+
+        @media (max-width: 600px) {
+            .stage-expand-btn { display: inline-block; }
+            .stage-content { display: none; }
+            .stage-content.expanded { display: grid; grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
+    <div id="neural-canvas"></div>
+
+    <a href="index.html" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Portfolio
+    </a>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero">
+            <div class="hero-content">
+                <p class="hero-label">Interactive Tutorial</p>
+                <h1 class="hero-title">
+                    <span class="line">
+                        <span class="letter">E</span><span class="letter">V</span><span class="letter">O</span><span class="letter">L</span><span class="letter">U</span><span class="letter">T</span><span class="letter">I</span><span class="letter">O</span><span class="letter">N</span>
+                    </span>
+                    <span class="line">
+                        <span class="letter">of AI</span>
+                    </span>
+                </h1>
+                <p class="hero-subtitle">From statistical curves to reasoning machines—how each breakthrough solved the limitations of the last, leading to models like Claude.</p>
+            </div>
+            <p class="hero-descriptor">Machine Learning History</p>
+            <div class="scroll-prompt">
+                <span>↓ Scroll to explore</span>
+            </div>
+        </section>
+
+        <!-- TIMELINE -->
+        <section class="timeline-section">
+            <div class="timeline-bg-text">TIMELINE</div>
+            <div class="timeline-header">
+                <p class="section-label">Historical Context</p>
+                <h2 class="section-title">Key <em>Milestones</em> in AI</h2>
+            </div>
+            <div class="timeline-grid" id="timeline">
+                <!-- Timeline events will be populated by JS -->
+            </div>
+            <p class="timeline-hint" id="timeline-hint">↑ Click any milestone to explore its significance</p>
+            <div class="timeline-detail" id="timeline-detail">
+                <div class="timeline-detail-inner">
+                    <div class="timeline-detail-year" id="detail-year"></div>
+                    <div class="timeline-detail-content">
+                        <h3 class="timeline-detail-name" id="detail-name"></h3>
+                        <p class="timeline-detail-tagline" id="detail-tagline"></p>
+                        <p class="timeline-detail-desc" id="detail-desc"></p>
+                        <div class="timeline-detail-relevance">
+                            <h4>Why It Matters</h4>
+                            <p id="detail-relevance"></p>
+                        </div>
+                        <div class="timeline-detail-sources" id="detail-sources-container" style="display: none; margin-top: 1.5rem;">
+                            <h4 style="font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem;">Sources & Further Reading</h4>
+                            <div id="detail-sources" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+                        </div>
+                    </div>
+                    <button class="timeline-detail-close" onclick="closeTimelineDetail()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- EVOLUTION -->
+        <section class="evolution-section">
+            <div class="evolution-header">
+                <h2 class="evolution-title">
+                    <span>THE</span>
+                    <span>STAGES</span>
+                </h2>
+                <p class="evolution-count">07 Stages of Evolution</p>
+            </div>
+
+            <div class="stages-container" id="stages">
+                <!-- Stage cards will be populated by JS -->
+            </div>
+        </section>
+
+        <!-- CONCLUSION -->
+        <section class="conclusion">
+            <div class="conclusion-grid">
+                <p class="conclusion-label">Where We Are Now</p>
+                <h2 class="conclusion-heading">Models like Claude represent the culmination of <em>80+ years</em> of research</h2>
+                <p class="conclusion-text">
+                    Each limitation today becomes tomorrow's research frontier. The journey from simple regression lines to reasoning machines demonstrates how persistent innovation transforms constraints into capabilities.
+                </p>
+                <div class="capabilities-grid">
+                    <div class="capability">
+                        <span class="capability-icon">⚡</span>
+                        <p class="capability-text"><strong>Transformer architecture</strong> for parallel, attention-based processing</p>
+                    </div>
+                    <div class="capability">
+                        <span class="capability-icon">📈</span>
+                        <p class="capability-text"><strong>Massive scale</strong> enabling emergent capabilities</p>
+                    </div>
+                    <div class="capability">
+                        <span class="capability-icon">🎯</span>
+                        <p class="capability-text"><strong>RLHF</strong> to align outputs with human preferences</p>
+                    </div>
+                    <div class="capability">
+                        <span class="capability-icon">🛡️</span>
+                        <p class="capability-text"><strong>Constitutional AI</strong> for safety and helpfulness</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span>© 2025 Tony Leo • Content fact-checked with primary academic sources</span>
+        <a href="index.html">Return to Portfolio →</a>
+    </footer>
+
+    <script>
+        // Timeline Data with expanded information
+        const timelineEvents = [
+            { 
+                year: 1805, 
+                name: "Least Squares", 
+                tagline: "The Birth of Predictive Modeling",
+                desc: "Adrien-Marie Legendre publishes the method of least squares in 1805. Carl Friedrich Gauss later claims to have used it since 1795, publishing his work in 1809. This technique for fitting a line to data points by minimizing squared errors becomes the mathematical foundation for all statistical learning.", 
+                relevance: "Every machine learning model today still minimizes some form of error function. Gradient descent, the algorithm that trains neural networks, is a direct descendant of these optimization principles.",
+                milestone: true,
+                sources: [
+                    {name: "Legendre's Original Work", url: "https://www.york.ac.uk/depts/maths/histstat/legendre.pdf"}
+                ]
+            },
+            { 
+                year: 1943, 
+                name: "McCulloch-Pitts", 
+                tagline: "Mathematics Meets Neuroscience",
+                desc: "Warren McCulloch and Walter Pitts publish 'A Logical Calculus of the Ideas Immanent in Nervous Activity' in the Bulletin of Mathematical Biophysics. They propose the first mathematical model of an artificial neuron, showing that networks of simple threshold units can compute any logical function.", 
+                relevance: "This paper proved that artificial systems could, in principle, perform computation like biological brains. It sparked the entire field of neural computation and inspired generations of AI researchers.",
+                milestone: true,
+                sources: [
+                    {name: "Original 1943 Paper", url: "https://link.springer.com/article/10.1007/BF02478259"}
+                ]
+            },
+            { 
+                year: 1957, 
+                name: "Perceptron", 
+                tagline: "The First Learning Machine",
+                desc: "Frank Rosenblatt at Cornell Aeronautical Laboratory develops the Perceptron—the first machine that could learn from examples. The Mark I Perceptron, funded by the Office of Naval Research, used a camera and 400 photocells to learn to recognize simple shapes through weight adjustment.", 
+                relevance: "The perceptron introduced the concept of learned weights and training from data. Its learning rule—adjust weights based on errors—remains the conceptual core of how all neural networks learn today.",
+                milestone: true,
+                sources: [
+                    {name: "Rosenblatt's 1958 Paper", url: "https://psycnet.apa.org/record/1959-09865-001"}
+                ]
+            },
+            { 
+                year: 1969, 
+                name: "AI Winter Begins", 
+                tagline: "The Limits Exposed",
+                desc: "Marvin Minsky and Seymour Papert publish 'Perceptrons: An Introduction to Computational Geometry,' mathematically proving that single-layer perceptrons cannot learn functions like XOR that are not linearly separable. The book's pessimistic conclusions contribute to a severe reduction in neural network funding.", 
+                relevance: "This setback, while devastating at the time, was scientifically accurate. It forced the field to develop multi-layer networks and backpropagation—the very innovations that would later revolutionize AI.",
+                milestone: false,
+                sources: [
+                    {name: "Perceptrons Book (MIT Press)", url: "https://mitpress.mit.edu/9780262630221/perceptrons/"}
+                ]
+            },
+            { 
+                year: 1974, 
+                name: "Backprop Theory", 
+                tagline: "The Algorithm Waiting in the Wings",
+                desc: "Paul Werbos describes the backpropagation algorithm in his Harvard PhD thesis 'Beyond Regression: New Tools for Prediction and Analysis in the Behavioral Sciences.' The work shows how to efficiently compute gradients through multi-layer networks, but goes largely unnoticed by the AI community for over a decade.", 
+                relevance: "Backpropagation would eventually become the engine of the deep learning revolution. This early work shows how foundational ideas sometimes need to wait for the right moment in history.",
+                milestone: false,
+                sources: [
+                    {name: "Werbos PhD Thesis (1974)", url: "https://www.researchgate.net/publication/35657389"}
+                ]
+            },
+            { 
+                year: 1986, 
+                name: "Backpropagation", 
+                tagline: "Neural Networks Reborn",
+                desc: "David Rumelhart, Geoffrey Hinton, and Ronald Williams publish 'Learning representations by back-propagating errors' in Nature. They demonstrate that backpropagation can train multi-layer networks to learn useful internal representations, reigniting interest in neural networks.", 
+                relevance: "This paper ended the AI Winter for neural networks. It showed that deep networks could learn hierarchical features automatically—the key insight that would eventually lead to modern deep learning.",
+                milestone: true,
+                sources: [
+                    {name: "Nature Paper (1986)", url: "https://www.nature.com/articles/323533a0"}
+                ]
+            },
+            { 
+                year: 1989, 
+                name: "CNNs Born", 
+                tagline: "Teaching Machines to See",
+                desc: "Yann LeCun and colleagues at Bell Labs publish 'Backpropagation Applied to Handwritten Zip Code Recognition,' demonstrating convolutional neural networks (CNNs) for reading handwritten digits. The LeNet architecture uses local connectivity and weight sharing, inspired by Hubel and Wiesel's discoveries about the visual cortex.", 
+                relevance: "LeNet demonstrated that neural networks could process images by learning spatial hierarchies—edges, then shapes, then objects. This architecture is the direct ancestor of models that now exceed human performance on vision tasks.",
+                milestone: true,
+                sources: [
+                    {name: "LeCun et al. 1989 Paper", url: "http://yann.lecun.com/exdb/publis/pdf/lecun-89e.pdf"}
+                ]
+            },
+            { 
+                year: 1997, 
+                name: "LSTM", 
+                tagline: "Learning to Remember",
+                desc: "Sepp Hochreiter and Jürgen Schmidhuber publish 'Long Short-Term Memory' in Neural Computation, introducing a recurrent architecture with gated memory cells. LSTM solves the vanishing gradient problem that prevented standard RNNs from learning dependencies spanning more than a few time steps.", 
+                relevance: "LSTM enabled neural networks to process sequences effectively—crucial for language, speech, and time-series data. It dominated sequence modeling for 20 years until transformers arrived.",
+                milestone: true,
+                sources: [
+                    {name: "LSTM Paper (1997)", url: "https://www.bioinf.jku.at/publications/older/2604.pdf"}
+                ]
+            },
+            { 
+                year: 2006, 
+                name: "Deep Learning", 
+                tagline: "The Deep Belief Breakthrough",
+                desc: "Geoffrey Hinton, Simon Osindero, and Yee-Whye Teh publish 'A Fast Learning Algorithm for Deep Belief Nets' in Neural Computation. They show that deep networks can be effectively trained using layer-wise unsupervised pre-training, reigniting interest in networks with more than 2-3 layers.", 
+                relevance: "This work proved that depth matters—deeper networks learn better representations. It kicked off the modern deep learning era and contributed to Hinton's 2024 Nobel Prize in Physics (shared with John Hopfield).",
+                milestone: true,
+                sources: [
+                    {name: "Deep Belief Networks Paper", url: "https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf"},
+                    {name: "2024 Nobel Prize in Physics", url: "https://www.nobelprize.org/prizes/physics/2024/press-release/"}
+                ]
+            },
+            { 
+                year: 2010, 
+                name: "ReLU Activation", 
+                tagline: "Simplicity Wins",
+                desc: "Vinod Nair and Geoffrey Hinton publish 'Rectified Linear Units Improve Restricted Boltzmann Machines' at ICML 2010, demonstrating that the simple ReLU activation—f(x) = max(0, x)—dramatically improves training. Unlike sigmoid, ReLU doesn't saturate for positive values, enabling much faster and more stable training of deep networks.", 
+                relevance: "ReLU largely solved the vanishing gradient problem for deep feedforward networks. This seemingly trivial change was essential for training the very deep networks that would soon transform AI.",
+                milestone: false,
+                sources: [
+                    {name: "ReLU Paper (ICML 2010)", url: "https://www.cs.toronto.edu/~hinton/absps/reluICML.pdf"}
+                ]
+            },
+            { 
+                year: 2012, 
+                name: "AlexNet", 
+                tagline: "The ImageNet Moment",
+                desc: "Alex Krizhevsky, Ilya Sutskever, and Geoffrey Hinton win the ImageNet Large Scale Visual Recognition Challenge (ILSVRC) using a deep CNN trained on GPUs. AlexNet achieves 15.3% top-5 error vs. 26.2% for the runner-up—a 10.8 percentage point gap that shocked the computer vision community.", 
+                relevance: "AlexNet was the 'big bang' of modern AI. It proved that deep learning at scale works, triggered an explosion of research and investment, and launched the careers of researchers who would later create GPT and other breakthroughs.",
+                milestone: true,
+                sources: [
+                    {name: "AlexNet Paper (NeurIPS 2012)", url: "https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html"}
+                ]
+            },
+            { 
+                year: 2014, 
+                name: "GANs & Adam", 
+                tagline: "Creation and Optimization",
+                desc: "Ian Goodfellow introduces Generative Adversarial Networks at NeurIPS—two networks competing in a minimax game to generate realistic data. Separately, Diederik Kingma and Jimmy Ba publish the Adam optimizer, combining momentum with adaptive learning rates. Adam becomes the default optimizer for deep learning.", 
+                relevance: "GANs opened the door to generative AI—machines that create rather than just classify. Adam made neural network training more reliable and accessible to practitioners worldwide.",
+                milestone: false,
+                sources: [
+                    {name: "GAN Paper (NeurIPS 2014)", url: "https://arxiv.org/abs/1406.2661"},
+                    {name: "Adam Optimizer Paper", url: "https://arxiv.org/abs/1412.6980"}
+                ]
+            },
+            { 
+                year: 2015, 
+                name: "ResNet", 
+                tagline: "Skip Connections Change Everything",
+                desc: "Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun at Microsoft Research introduce Residual Networks with skip connections that allow gradients to flow directly through the network. An ensemble of 152-layer networks wins ILSVRC 2015 with 3.57% top-5 error—surpassing human-level performance.", 
+                relevance: "ResNet proved that we could train arbitrarily deep networks. Skip connections are now ubiquitous in AI architecture design, including in transformers. The insight: make it easy to learn the identity function.",
+                milestone: true,
+                sources: [
+                    {name: "ResNet Paper (CVPR 2016)", url: "https://arxiv.org/abs/1512.03385"}
+                ]
+            },
+            { 
+                year: 2017, 
+                name: "Transformer", 
+                tagline: "Attention Is All You Need",
+                desc: "Ashish Vaswani, Noam Shazeer, and colleagues at Google publish 'Attention Is All You Need,' introducing the Transformer architecture. It replaces recurrence entirely with self-attention mechanisms, enabling massive parallelization and capturing long-range dependencies in a single forward pass.", 
+                relevance: "The Transformer is arguably the most important architecture in AI history. It powers GPT, Claude, BERT, and virtually every modern language model. Its parallel nature finally unlocked the potential of massive compute.",
+                milestone: true,
+                sources: [
+                    {name: "Attention Is All You Need", url: "https://arxiv.org/abs/1706.03762"}
+                ]
+            },
+            { 
+                year: 2018, 
+                name: "BERT & GPT", 
+                tagline: "Pre-training Takes Over",
+                desc: "Google releases BERT (Bidirectional Encoder Representations from Transformers) and OpenAI releases GPT (Generative Pre-trained Transformer). Both demonstrate that pre-training on massive text corpora, then fine-tuning on specific tasks, dramatically outperforms training from scratch.", 
+                relevance: "Transfer learning through pre-training changed how AI systems are built. Instead of task-specific models, we now train general-purpose foundation models that can be adapted to thousands of applications.",
+                milestone: true,
+                sources: [
+                    {name: "BERT Paper", url: "https://arxiv.org/abs/1810.04805"},
+                    {name: "GPT-1 Paper", url: "https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf"}
+                ]
+            },
+            { 
+                year: 2020, 
+                name: "GPT-3", 
+                tagline: "Scale Reveals Emergence",
+                desc: "OpenAI releases GPT-3 with 175 billion parameters—over 100x larger than GPT-2's 1.5 billion. The model demonstrates surprising 'emergent' abilities: few-shot learning, basic reasoning, code generation, and creative writing, none of which were explicitly programmed or trained for.", 
+                relevance: "GPT-3 proved the 'scaling hypothesis'—that simply making models bigger produces qualitatively new capabilities. This insight drives the current race to build ever-larger models.",
+                milestone: true,
+                sources: [
+                    {name: "GPT-3 Paper (Language Models are Few-Shot Learners)", url: "https://arxiv.org/abs/2005.14165"}
+                ]
+            },
+            { 
+                year: 2022, 
+                name: "ChatGPT", 
+                tagline: "AI Meets the World",
+                desc: "OpenAI releases ChatGPT on November 30, 2022, combining GPT-3.5 with Reinforcement Learning from Human Feedback (RLHF). The conversational interface makes AI accessible to everyone. According to UBS analysis, it reaches 100 million monthly active users by January 2023—the fastest-growing consumer application in history.", 
+                relevance: "ChatGPT was the 'Netscape moment' for AI—when a technology leaves research labs and enters everyday life. It triggered massive investment, regulatory attention, and a fundamental shift in how people think about AI.",
+                milestone: true,
+                sources: [
+                    {name: "ChatGPT Launch Blog Post", url: "https://openai.com/blog/chatgpt"},
+                    {name: "UBS Growth Analysis (Reuters)", url: "https://www.reuters.com/technology/chatgpt-sets-record-fastest-growing-user-base-analyst-note-2023-02-01/"}
+                ]
+            },
+            { 
+                year: 2023, 
+                name: "GPT-4 & Claude", 
+                tagline: "Reasoning at Scale",
+                desc: "OpenAI releases GPT-4 in March 2023, demonstrating multimodal understanding (text + images) and near-human performance on professional exams. Anthropic releases Claude 2, introducing Constitutional AI for safety. Models begin approaching human-level performance on bar exams, medical licensing, and complex reasoning tasks.", 
+                relevance: "We're now in the era of capable AI assistants that can help with research, coding, analysis, and creative work. The focus shifts from 'can AI do this?' to 'how do we deploy AI safely and beneficially?'",
+                milestone: true,
+                sources: [
+                    {name: "GPT-4 Technical Report", url: "https://arxiv.org/abs/2303.08774"},
+                    {name: "Constitutional AI Paper", url: "https://arxiv.org/abs/2212.08073"}
+                ]
+            },
+        ];
+
+        // Track currently selected timeline event
+        let selectedTimelineEvent = null;
+
+        // Evolution Stages Data
+        const stages = [
+            {
+                id: 'regression',
+                title: 'Linear Regression',
+                era: '1800s — Foundation',
+                color: 'teal',
+                insight: 'Data contains patterns we can model mathematically',
+                howItWorks: 'Finds the best-fit line through data points by minimizing the squared distance between predictions and actual values. The method was formalized by Legendre (1805) and Gauss (1809), establishing the simplest form of predictive modeling.',
+                problemSolved: 'Predicting continuous outcomes from input variables. Established the mathematical foundation for all statistical learning and inference.',
+                limitations: [
+                    'Can only model linear relationships between variables',
+                    'Requires manual feature engineering for complex patterns',
+                    'No automatic learning of representations from raw data'
+                ],
+                tags: ['Statistics', 'Least Squares', 'Prediction']
+            },
+            {
+                id: 'perceptron',
+                title: 'Perceptron',
+                era: '1957 — Learning Begins',
+                color: 'accent',
+                insight: 'Machines can learn from their mistakes',
+                howItWorks: 'A single artificial neuron that learns weights for inputs, sums them with a bias, and applies a step function to make binary decisions. Rosenblatt\'s perceptron learning algorithm updates weights based on prediction errors—moving toward correct classifications.',
+                problemSolved: 'Automatic learning! The machine adjusts its own weights based on prediction errors—no manual tuning required. Birth of machine learning.',
+                limitations: [
+                    'Only solves linearly separable problems',
+                    'Cannot learn XOR or other non-linear patterns (proven by Minsky & Papert, 1969)',
+                    'Single layer means only a single decision boundary'
+                ],
+                tags: ['Neural Networks', 'Binary Classification', 'Rosenblatt']
+            },
+            {
+                id: 'mlp',
+                title: 'Multi-Layer Perceptron',
+                era: '1980s — Depth Arrives',
+                color: 'lavender',
+                insight: 'Depth + non-linearity = unlimited learning potential',
+                howItWorks: 'Stack multiple layers of neurons with non-linear activation functions (sigmoid, tanh). The backpropagation algorithm (Rumelhart, Hinton & Williams, 1986) enables learning across all layers by computing gradients via the chain rule.',
+                problemSolved: 'Universal function approximation! Proven by Cybenko (1989) and Hornik et al. (1989) to approximate ANY continuous function given enough neurons. XOR and complex patterns now solvable.',
+                limitations: [
+                    'Vanishing gradients prevent training deep networks',
+                    'Training instability with many layers',
+                    'No built-in understanding of spatial or temporal structure'
+                ],
+                tags: ['Backpropagation', 'Hidden Layers', 'Universal Approximation']
+            },
+            {
+                id: 'deep',
+                title: 'Deep Neural Networks',
+                era: '2006–2015 — The Renaissance',
+                color: 'coral',
+                insight: 'Features emerge automatically from raw data',
+                howItWorks: 'Many layers (10-150+) with modern techniques: ReLU activation (Nair & Hinton, 2010), dropout regularization (Srivastava et al., 2014), batch normalization (Ioffe & Szegedy, 2015), and residual connections (He et al., 2015) for stable gradient flow.',
+                problemSolved: 'Hierarchical feature learning. Early layers learn edges and textures, middle layers learn shapes and parts, deep layers learn high-level concepts. No more manual feature engineering.',
+                limitations: [
+                    'Requires massive labeled datasets for training',
+                    'Treats all inputs uniformly—no inherent structure awareness',
+                    'Sequential data processing still fundamentally challenging'
+                ],
+                tags: ['ReLU', 'Dropout', 'BatchNorm', 'ResNet', 'ImageNet']
+            },
+            {
+                id: 'specialized',
+                title: 'CNNs & RNNs',
+                era: '1989–2015 — Structure Awareness',
+                color: 'teal',
+                insight: 'Architecture should match data structure',
+                howItWorks: 'CNNs (LeCun et al., 1989) use learnable sliding filters to detect spatial patterns in images, achieving translation invariance through weight sharing. RNNs process sequences with recurrent connections; LSTMs (Hochreiter & Schmidhuber, 1997) add gated memory cells to maintain long-term temporal context.',
+                problemSolved: 'Structure-aware learning! CNNs understand that nearby pixels are related. RNNs understand that sequence order matters. Specialized architectures for specialized data.',
+                limitations: [
+                    'RNNs process sequentially—slow and limited context window',
+                    'Long-range dependencies still difficult despite LSTM',
+                    'CNNs don\'t transfer well to variable-length sequences like language'
+                ],
+                tags: ['Convolution', 'LSTM', 'Pooling', 'Recurrence', 'Memory Cells']
+            },
+            {
+                id: 'transformer',
+                title: 'Transformer',
+                era: '2017 — Attention Revolution',
+                color: 'accent',
+                insight: 'Attention is all you need',
+                howItWorks: 'Self-attention mechanism (Vaswani et al., 2017) allows every element in a sequence to directly attend to every other element with learned importance weights. Multi-head attention enables capturing different types of relationships. Fully parallel processing replaces sequential RNN computation.',
+                problemSolved: 'Long-range dependencies solved! Any token can directly "see" any other token regardless of distance. Massively parallelizable, enabling training on billions of parameters with modern GPUs and TPUs.',
+                limitations: [
+                    'Quadratic memory and compute with sequence length (O(n²))',
+                    'No inherent notion of position (requires positional encoding)',
+                    'Still requires enormous data and compute resources'
+                ],
+                tags: ['Self-Attention', 'Multi-Head', 'Positional Encoding', 'Parallelization']
+            },
+            {
+                id: 'llm',
+                title: 'Large Language Models',
+                era: '2020+ — Emergence',
+                color: 'lavender',
+                insight: 'Scale unlocks emergence',
+                howItWorks: 'Transformers at massive scale (billions to trillions of parameters) trained on internet-scale text data. RLHF—Reinforcement Learning from Human Feedback (Christiano et al., 2017; Ouyang et al., 2022)—aligns outputs with human preferences. Constitutional AI (Bai et al., 2022) provides additional safety guardrails.',
+                problemSolved: 'Emergent capabilities! Reasoning, code generation, creativity, multilingual understanding, and general-purpose intelligence arise from scale. Abilities not explicitly programmed appear at certain model sizes.',
+                limitations: [
+                    'Hallucinations and factual errors remain challenging',
+                    'Context window limits constrain very long documents',
+                    'Reasoning depth and reliability still developing'
+                ],
+                tags: ['GPT', 'Claude', 'RLHF', 'Constitutional AI', 'Emergence', 'Scale']
+            }
+        ];
+
+        // SVG Visuals for each stage
+        const stageVisuals = {
+            regression: `<svg viewBox="0 0 120 80" fill="none">
+                <circle cx="20" cy="60" r="3" fill="#5a8a87" opacity="0.6"/>
+                <circle cx="35" cy="48" r="3" fill="#5a8a87" opacity="0.6"/>
+                <circle cx="50" cy="42" r="3" fill="#5a8a87" opacity="0.6"/>
+                <circle cx="65" cy="35" r="3" fill="#5a8a87" opacity="0.6"/>
+                <circle cx="80" cy="28" r="3" fill="#5a8a87" opacity="0.6"/>
+                <circle cx="95" cy="22" r="3" fill="#5a8a87" opacity="0.6"/>
+                <line x1="10" y1="68" x2="110" y2="15" stroke="#c4a35a" stroke-width="2"/>
+                <line x1="35" y1="48" x2="35" y2="53" stroke="#b87a6a" stroke-width="1" stroke-dasharray="2"/>
+                <line x1="65" y1="35" x2="65" y2="38" stroke="#b87a6a" stroke-width="1" stroke-dasharray="2"/>
+            </svg>`,
+            perceptron: `<svg viewBox="0 0 120 80" fill="none">
+                <circle cx="20" cy="20" r="8" fill="#c4a35a" opacity="0.3" stroke="#c4a35a" stroke-width="1"/>
+                <circle cx="20" cy="40" r="8" fill="#c4a35a" opacity="0.3" stroke="#c4a35a" stroke-width="1"/>
+                <circle cx="20" cy="60" r="8" fill="#c4a35a" opacity="0.3" stroke="#c4a35a" stroke-width="1"/>
+                <line x1="28" y1="20" x2="52" y2="40" stroke="#4a4845" stroke-width="1"/>
+                <line x1="28" y1="40" x2="52" y2="40" stroke="#4a4845" stroke-width="1"/>
+                <line x1="28" y1="60" x2="52" y2="40" stroke="#4a4845" stroke-width="1"/>
+                <circle cx="60" cy="40" r="12" fill="#c4a35a" stroke="#c4a35a" stroke-width="2"/>
+                <text x="60" y="44" text-anchor="middle" fill="#0d0c0a" font-size="10" font-weight="bold">Σ</text>
+                <line x1="72" y1="40" x2="95" y2="40" stroke="#c4a35a" stroke-width="2"/>
+                <rect x="95" y="30" width="20" height="20" fill="#5a8a87" opacity="0.3" stroke="#5a8a87" stroke-width="1"/>
+                <text x="105" y="44" text-anchor="middle" fill="#e8e4dc" font-size="8">0/1</text>
+            </svg>`,
+            mlp: `<svg viewBox="0 0 120 80" fill="none">
+                ${[15,30,45,60].map(y => `<circle cx="15" cy="${y}" r="6" fill="#8a7a9a" opacity="0.4" stroke="#8a7a9a" stroke-width="1"/>`).join('')}
+                ${[20,40,60].map(y => `<circle cx="45" cy="${y}" r="6" fill="#8a7a9a" opacity="0.6" stroke="#8a7a9a" stroke-width="1"/>`).join('')}
+                ${[25,50].map(y => `<circle cx="75" cy="${y}" r="6" fill="#8a7a9a" opacity="0.8" stroke="#8a7a9a" stroke-width="1"/>`).join('')}
+                <circle cx="105" cy="37" r="6" fill="#5a8a87" stroke="#5a8a87" stroke-width="1"/>
+                ${[15,30,45,60].flatMap(y1 => [20,40,60].map(y2 => `<line x1="21" y1="${y1}" x2="39" y2="${y2}" stroke="#4a4845" stroke-width="0.5" opacity="0.4"/>`)).join('')}
+                ${[20,40,60].flatMap(y1 => [25,50].map(y2 => `<line x1="51" y1="${y1}" x2="69" y2="${y2}" stroke="#4a4845" stroke-width="0.5" opacity="0.4"/>`)).join('')}
+                ${[25,50].map(y => `<line x1="81" y1="${y}" x2="99" y2="37" stroke="#4a4845" stroke-width="0.5" opacity="0.4"/>`).join('')}
+            </svg>`,
+            deep: `<svg viewBox="0 0 120 80" fill="none">
+                ${[10,25,40,55,70,85,100].map((x,i) => 
+                    [15,28,41,54,67].map(y => 
+                        `<rect x="${x-3}" y="${y-3}" width="6" height="6" fill="#b87a6a" opacity="${0.3 + i*0.1}"/>`
+                    ).join('')
+                ).join('')}
+                <path d="M 25 20 Q 55 5 85 20" fill="none" stroke="#c4a35a" stroke-width="1.5" stroke-dasharray="3"/>
+                <text x="55" y="12" text-anchor="middle" fill="#c4a35a" font-size="6">skip</text>
+            </svg>`,
+            specialized: `<svg viewBox="0 0 120 80" fill="none">
+                <text x="30" y="10" text-anchor="middle" fill="#5a8a87" font-size="7" font-weight="bold">CNN</text>
+                ${[0,1,2].flatMap(row => [0,1,2].map(col => 
+                    `<rect x="${10+col*12}" y="${15+row*12}" width="10" height="10" fill="${(row+col)%2===0 ? '#5a8a87' : '#3d6563'}" opacity="0.6" stroke="#5a8a87" stroke-width="0.5"/>`
+                )).join('')}
+                <rect x="22" y="27" width="12" height="12" fill="#c4a35a" opacity="0.5" stroke="#c4a35a" stroke-width="1"/>
+                <text x="90" y="10" text-anchor="middle" fill="#5a8a87" font-size="7" font-weight="bold">RNN</text>
+                ${[65,85,105].map((x,i) => `
+                    <rect x="${x-8}" y="25" width="16" height="16" rx="2" fill="#5a8a87" opacity="0.6" stroke="#5a8a87" stroke-width="1"/>
+                    <text x="${x}" y="36" text-anchor="middle" fill="#e8e4dc" font-size="7">h${i}</text>
+                    ${i < 2 ? `<line x1="${x+8}" y1="33" x2="${x+12}" y2="33" stroke="#5a8a87" stroke-width="1.5"/>` : ''}
+                `).join('')}
+                <path d="M 93 25 Q 93 18 85 18 Q 77 18 77 25" fill="none" stroke="#5a8a87" stroke-width="1" stroke-dasharray="2"/>
+                <text x="30" y="70" text-anchor="middle" fill="#4a4845" font-size="6">Spatial</text>
+                <text x="85" y="70" text-anchor="middle" fill="#4a4845" font-size="6">Sequential</text>
+            </svg>`,
+            transformer: `<svg viewBox="0 0 120 80" fill="none">
+                ${['The','cat','sat','on'].map((word,i) => `
+                    <rect x="${10+i*27}" y="55" width="24" height="14" rx="2" fill="#c4a35a" opacity="0.3" stroke="#c4a35a" stroke-width="1"/>
+                    <text x="${22+i*27}" y="65" text-anchor="middle" fill="#e8e4dc" font-size="7">${word}</text>
+                `).join('')}
+                ${[0,1,2,3].flatMap(from => [0,1,2,3].map(to => 
+                    `<line x1="${22+from*27}" y1="55" x2="${22+to*27}" y2="40" stroke="#c4a35a" stroke-width="${from===to ? 1.5 : 0.5}" opacity="${from===to ? 0.8 : 0.2}"/>`
+                )).join('')}
+                <rect x="10" y="20" width="100" height="18" rx="3" fill="#c4a35a" opacity="0.6" stroke="#c4a35a" stroke-width="1"/>
+                <text x="60" y="32" text-anchor="middle" fill="#0d0c0a" font-size="8" font-weight="bold">Self-Attention</text>
+                <text x="60" y="12" text-anchor="middle" fill="#c4a35a" font-size="6">parallel processing</text>
+            </svg>`,
+            llm: `<svg viewBox="0 0 120 80" fill="none">
+                <ellipse cx="60" cy="40" rx="45" ry="32" fill="#8a7a9a" opacity="0.2" stroke="#8a7a9a" stroke-width="1"/>
+                ${[...Array(10)].map((_,i) => {
+                    const angle = (i/10) * Math.PI * 2;
+                    const x = 60 + Math.cos(angle) * 28;
+                    const y = 40 + Math.sin(angle) * 20;
+                    return `<circle cx="${x}" cy="${y}" r="3" fill="#8a7a9a" opacity="0.8"/>`;
+                }).join('')}
+                ${[...Array(10)].map((_,i) => {
+                    const angle1 = (i/10) * Math.PI * 2;
+                    const angle2 = ((i+3)/10) * Math.PI * 2;
+                    const x1 = 60 + Math.cos(angle1) * 28;
+                    const y1 = 40 + Math.sin(angle1) * 20;
+                    const x2 = 60 + Math.cos(angle2) * 28;
+                    const y2 = 40 + Math.sin(angle2) * 20;
+                    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#8a7a9a" stroke-width="0.5" opacity="0.4"/>`;
+                }).join('')}
+                <text x="60" y="38" text-anchor="middle" fill="#8a7a9a" font-size="8" font-weight="bold">175B+</text>
+                <text x="60" y="48" text-anchor="middle" fill="#8a7a9a" font-size="6">parameters</text>
+            </svg>`
+        };
+
+        // Render Timeline
+        function renderTimeline() {
+            const container = document.getElementById('timeline');
+            container.innerHTML = timelineEvents.map((event, index) => `
+                <div class="timeline-event ${event.milestone ? 'milestone' : ''}" 
+                     data-index="${index}"
+                     onclick="showTimelineDetail(${index})">
+                    <div class="timeline-dot"></div>
+                    <span class="timeline-year">${event.year}</span>
+                    <span class="timeline-name">${event.name}</span>
+                </div>
+            `).join('');
+        }
+
+        // Show timeline detail panel
+        function showTimelineDetail(index) {
+            const event = timelineEvents[index];
+            const detailPanel = document.getElementById('timeline-detail');
+            const hint = document.getElementById('timeline-hint');
+            const sourcesContainer = document.getElementById('detail-sources-container');
+            const sourcesDiv = document.getElementById('detail-sources');
+            
+            // Update content
+            document.getElementById('detail-year').textContent = event.year;
+            document.getElementById('detail-name').textContent = event.name;
+            document.getElementById('detail-tagline').textContent = event.tagline;
+            document.getElementById('detail-desc').textContent = event.desc;
+            document.getElementById('detail-relevance').textContent = event.relevance;
+            
+            // Render sources if available
+            if (event.sources && event.sources.length > 0) {
+                sourcesDiv.innerHTML = event.sources.map(source => 
+                    `<a href="${source.url}" target="_blank" rel="noopener noreferrer" 
+                        style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 0.8rem; 
+                        font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.05em;
+                        color: var(--teal); background: rgba(90, 138, 135, 0.1); 
+                        border: 1px solid rgba(90, 138, 135, 0.2); text-decoration: none;
+                        transition: all 0.3s ease;"
+                        onmouseover="this.style.background='rgba(90, 138, 135, 0.2)'; this.style.borderColor='var(--teal)';"
+                        onmouseout="this.style.background='rgba(90, 138, 135, 0.1)'; this.style.borderColor='rgba(90, 138, 135, 0.2)';">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/>
+                            <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        ${source.name}
+                    </a>`
+                ).join('');
+                sourcesContainer.style.display = 'block';
+            } else {
+                sourcesContainer.style.display = 'none';
+            }
+            
+            // Update active states
+            document.querySelectorAll('.timeline-event').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+            
+            // Show panel
+            detailPanel.classList.add('active');
+            hint.classList.add('hidden');
+            
+            // Smooth scroll to detail if needed
+            setTimeout(() => {
+                detailPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+            
+            selectedTimelineEvent = index;
+        }
+
+        // Close timeline detail panel
+        function closeTimelineDetail() {
+            const detailPanel = document.getElementById('timeline-detail');
+            const hint = document.getElementById('timeline-hint');
+            
+            detailPanel.classList.remove('active');
+            hint.classList.remove('hidden');
+            
+            document.querySelectorAll('.timeline-event').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            selectedTimelineEvent = null;
+        }
+
+        // Render Stages
+        function renderStages() {
+            const container = document.getElementById('stages');
+            container.innerHTML = stages.map((stage, index) => `
+                <div class="stage-card" data-stage="${stage.id}">
+                    <div class="stage-header">
+                        <span class="stage-number">0${index + 1} / 07</span>
+                        <div class="stage-title-group">
+                            <h3 class="stage-title">${stage.title}</h3>
+                            <span class="stage-era">${stage.era}</span>
+                        </div>
+                        <div class="stage-visual">
+                            ${stageVisuals[stage.id]}
+                        </div>
+                    </div>
+                    
+                    <div class="stage-insight">
+                        <span class="stage-insight-icon">✦</span>
+                        <p>${stage.insight}</p>
+                    </div>
+                    
+                    <button class="stage-expand-btn" onclick="toggleStage(this)">Show Details</button>
+                    
+                    <div class="stage-content">
+                        <div class="stage-block">
+                            <h4>How It Works</h4>
+                            <p>${stage.howItWorks}</p>
+                        </div>
+                        <div class="stage-block solved">
+                            <h4>✓ Problem Solved</h4>
+                            <p>${stage.problemSolved}</p>
+                        </div>
+                        <div class="stage-block limitations">
+                            <h4>→ Limitations</h4>
+                            <ul>
+                                ${stage.limitations.map(lim => `<li>${lim}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="stage-block">
+                            <div class="stage-tags">
+                                ${stage.tags.map(tag => `<span class="stage-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${index < stages.length - 1 ? `
+                    <div class="stage-connector">
+                        <div class="connector-line">
+                            <span></span>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 5v14M19 12l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                ` : ''}
+            `).join('');
+        }
+
+        // Toggle stage expansion (mobile)
+        function toggleStage(btn) {
+            const content = btn.nextElementSibling;
+            content.classList.toggle('expanded');
+            btn.textContent = content.classList.contains('expanded') ? 'Hide Details' : 'Show Details';
+        }
+
+        // Custom cursor
+        const cursor = document.querySelector('.cursor');
+        const cursorDot = document.querySelector('.cursor-dot');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+            cursorDot.style.left = e.clientX - 2 + 'px';
+            cursorDot.style.top = e.clientY - 2 + 'px';
+        });
+
+        // Expand cursor on interactive elements
+        const interactiveElements = document.querySelectorAll('a, button, .stage-card, .timeline-event, .capability');
+        
+        function addCursorListeners() {
+            document.querySelectorAll('a, button, .stage-card, .timeline-event, .capability').forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursor.classList.add('expanded');
+                    cursorDot.classList.add('expanded');
+                });
+                el.addEventListener('mouseleave', () => {
+                    cursor.classList.remove('expanded');
+                    cursorDot.classList.remove('expanded');
+                });
+            });
+        }
+
+        // p5.js Neural Network Animation
+        const sketch = (p) => {
+            let nodes = [];
+            let connections = [];
+            let mouse = { x: 0, y: 0 };
+            let scrollY = 0;
+            let targetScrollY = 0;
+
+            const PALETTE = {
+                teal: [90, 138, 135],
+                accent: [196, 163, 90],
+                coral: [184, 122, 106],
+                lavender: [138, 122, 154]
+            };
+
+            class Node {
+                constructor(layer) {
+                    this.layer = layer;
+                    this.parallax = p.random(0.2, 0.5);
+                    this.reset();
+                }
+
+                reset() {
+                    this.x = p.random(p.width);
+                    this.baseY = p.random(p.height);
+                    this.size = p.random(3, 8);
+                    this.pulse = p.random(p.TWO_PI);
+                    this.pulseSpeed = p.random(0.01, 0.03);
+                    const colors = [PALETTE.teal, PALETTE.accent, PALETTE.coral, PALETTE.lavender];
+                    this.color = colors[Math.floor(p.random(colors.length))];
+                    this.alpha = p.random(30, 80);
+                    this.vx = 0;
+                    this.vy = 0;
+                }
+
+                update() {
+                    // Gentle drift
+                    this.vx += p.random(-0.02, 0.02);
+                    this.vy += p.random(-0.02, 0.02);
+                    
+                    // Mouse influence
+                    let dx = this.x - mouse.x;
+                    let dy = this.getY() - mouse.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150 && dist > 0) {
+                        let force = (150 - dist) / 150 * 0.2;
+                        this.vx += (dx / dist) * force;
+                        this.vy += (dy / dist) * force;
+                    }
+                    
+                    // Damping
+                    this.vx *= 0.98;
+                    this.vy *= 0.98;
+                    
+                    this.x += this.vx;
+                    this.baseY += this.vy;
+                    this.pulse += this.pulseSpeed;
+                    
+                    // Wrap
+                    if (this.x < -20) this.x = p.width + 20;
+                    if (this.x > p.width + 20) this.x = -20;
+                    if (this.baseY < -20) this.baseY = p.height + 20;
+                    if (this.baseY > p.height + 20) this.baseY = -20;
+                }
+
+                getY() {
+                    return this.baseY + scrollY * this.parallax;
+                }
+
+                draw() {
+                    let y = this.getY();
+                    let pulseSize = this.size + p.sin(this.pulse) * 2;
+                    
+                    // Glow
+                    p.noStroke();
+                    p.fill(this.color[0], this.color[1], this.color[2], this.alpha * 0.3);
+                    p.ellipse(this.x, y, pulseSize * 3);
+                    
+                    // Core
+                    p.fill(this.color[0], this.color[1], this.color[2], this.alpha);
+                    p.ellipse(this.x, y, pulseSize);
+                }
+            }
+
+            class Connection {
+                constructor(nodeA, nodeB) {
+                    this.nodeA = nodeA;
+                    this.nodeB = nodeB;
+                    this.alpha = p.random(5, 20);
+                    this.pulseOffset = p.random(p.TWO_PI);
+                }
+
+                draw() {
+                    let ya = this.nodeA.getY();
+                    let yb = this.nodeB.getY();
+                    let dist = p.dist(this.nodeA.x, ya, this.nodeB.x, yb);
+                    
+                    if (dist < 200) {
+                        let alpha = p.map(dist, 0, 200, this.alpha, 0);
+                        alpha *= 0.5 + p.sin(p.frameCount * 0.02 + this.pulseOffset) * 0.5;
+                        p.stroke(90, 138, 135, alpha);
+                        p.strokeWeight(0.5);
+                        p.line(this.nodeA.x, ya, this.nodeB.x, yb);
+                    }
+                }
+            }
+
+            p.setup = () => {
+                let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                canvas.parent('neural-canvas');
+
+                // Create nodes
+                let numNodes = p.constrain(Math.floor((p.width * p.height) / 40000), 20, 60);
+                for (let i = 0; i < numNodes; i++) {
+                    nodes.push(new Node(i % 3));
+                }
+
+                // Create connections
+                for (let i = 0; i < nodes.length; i++) {
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        if (p.random() < 0.15) {
+                            connections.push(new Connection(nodes[i], nodes[j]));
+                        }
+                    }
+                }
+            };
+
+            p.draw = () => {
+                targetScrollY = window.pageYOffset;
+                scrollY += (targetScrollY - scrollY) * 0.1;
+
+                p.background(13, 12, 10);
+
+                // Vignette
+                let gradient = p.drawingContext.createRadialGradient(
+                    p.width / 2, p.height / 2, 0,
+                    p.width / 2, p.height / 2, p.width * 0.8
+                );
+                gradient.addColorStop(0, 'rgba(15, 14, 12, 0)');
+                gradient.addColorStop(1, 'rgba(5, 4, 3, 0.6)');
+                p.drawingContext.fillStyle = gradient;
+                p.drawingContext.fillRect(0, 0, p.width, p.height);
+
+                // Draw connections
+                for (let conn of connections) {
+                    conn.draw();
+                }
+
+                // Draw nodes
+                for (let node of nodes) {
+                    node.update();
+                    node.draw();
+                }
+            };
+
+            p.mouseMoved = () => {
+                mouse.x = p.mouseX;
+                mouse.y = p.mouseY;
+            };
+
+            p.windowResized = () => {
+                p.resizeCanvas(p.windowWidth, p.windowHeight);
+            };
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTimeline();
+            renderStages();
+            addCursorListeners();
+            new p5(sketch);
+        });
+    </script>
+</body>
+</html>

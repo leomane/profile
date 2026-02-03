@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murmuration Flow | Tony Leo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0c0a;
+            --text: #e8e4dc;
+            --text-dim: #4a4845;
+            --accent: #c4a35a;
+            --teal: #5a8a87;
+            --coral: #b87a6a;
+            --lavender: #8a7a9a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: none;
+            min-height: 100vh;
+        }
+
+        /* Custom cursor */
+        .cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.3s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor.expanded {
+            width: 60px;
+            height: 60px;
+            border-color: var(--accent);
+            background: rgba(196, 163, 90, 0.1);
+        }
+
+        .cursor-dot {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: background 0.3s ease;
+        }
+
+        .cursor-dot.expanded {
+            background: var(--accent);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(90, 138, 135, 0.1);
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--teal);
+            line-height: 1.6;
+        }
+
+        .header .subtitle::before {
+            content: '// ';
+            color: var(--text-dim);
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: rgba(13, 12, 10, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border: 1px solid rgba(90, 138, 135, 0.1);
+            position: relative;
+        }
+
+        .controls-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--teal), var(--accent));
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 400;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(90, 138, 135, 0.2);
+        }
+
+        /* Seed Controls */
+        .seed-input {
+            width: 100%;
+            background: rgba(90, 138, 135, 0.05);
+            padding: 0.75rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(90, 138, 135, 0.2);
+            color: var(--text);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .seed-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(196, 163, 90, 0.05);
+        }
+
+        .seed-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Parameter Controls */
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 0.625rem;
+            opacity: 0.8;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 2px;
+            background: rgba(90, 138, 135, 0.3);
+            border-radius: 1px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--teal);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--accent);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: var(--teal);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .value-display {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Color Pickers */
+        .color-group {
+            margin-bottom: 1rem;
+        }
+
+        .color-group label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 0.375rem;
+        }
+
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .color-picker-container input[type="color"] {
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(90, 138, 135, 0.3);
+            border-radius: 0;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        .color-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+
+        /* Buttons */
+        .button {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(90, 138, 135, 0.3);
+            padding: 0.75rem 1rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--teal);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+
+        .button:hover {
+            border-color: var(--teal);
+            color: var(--bg);
+        }
+
+        .button:hover::before {
+            transform: scaleX(1);
+        }
+
+        .button.accent::before {
+            background: var(--accent);
+        }
+
+        .button.accent:hover {
+            border-color: var(--accent);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .button-row .button {
+            flex: 1;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #canvas-container {
+            width: 100%;
+            max-width: 900px;
+            overflow: hidden;
+            border: 1px solid rgba(90, 138, 135, 0.1);
+            background: var(--bg);
+            position: relative;
+        }
+
+        #canvas-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--teal), transparent);
+            opacity: 0.5;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 100px;
+        }
+
+        .loading::before {
+            content: '// ';
+        }
+
+        /* Back link */
+        .back-link {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-link:hover {
+            color: var(--accent);
+        }
+
+        .back-link::before {
+            content: '← ';
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .back-link {
+                position: relative;
+                top: 0;
+                right: 0;
+                display: block;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-dot"></div>
+
+    <a href="index.html" class="back-link">Back to Portfolio</a>
+
+    <div class="container">
+        <header class="header">
+            <div>
+                <h1>Murmuration Flow</h1>
+                <div class="subtitle">Emergent beauty from simple rules</div>
+            </div>
+        </header>
+
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">Initializing murmuration</div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-section">
+                    <h3>Seed</h3>
+                    <input type="number" id="seed-input" class="seed-input" value="42" onchange="updateSeed()">
+                    <div class="seed-controls">
+                        <button class="button" onclick="previousSeed()">← Prev</button>
+                        <button class="button" onclick="nextSeed()">Next →</button>
+                    </div>
+                    <button class="button accent" onclick="randomSeedAndUpdate()">↻ Random</button>
+                </div>
+
+                <div class="control-section">
+                    <h3>Flock Dynamics</h3>
+                    
+                    <div class="control-group">
+                        <label>Flock Size</label>
+                        <div class="slider-container">
+                            <input type="range" id="flockSize" min="100" max="600" step="50" value="300" oninput="updateParam('flockSize', this.value)">
+                            <span class="value-display" id="flockSize-value">300</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Cohesion</label>
+                        <div class="slider-container">
+                            <input type="range" id="cohesion" min="0.1" max="2.0" step="0.1" value="1.0" oninput="updateParam('cohesion', this.value)">
+                            <span class="value-display" id="cohesion-value">1.0</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Alignment</label>
+                        <div class="slider-container">
+                            <input type="range" id="alignment" min="0.1" max="2.0" step="0.1" value="1.2" oninput="updateParam('alignment', this.value)">
+                            <span class="value-display" id="alignment-value">1.2</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Separation</label>
+                        <div class="slider-container">
+                            <input type="range" id="separation" min="0.5" max="3.0" step="0.1" value="1.5" oninput="updateParam('separation', this.value)">
+                            <span class="value-display" id="separation-value">1.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Visuals</h3>
+
+                    <div class="control-group">
+                        <label>Perception Radius</label>
+                        <div class="slider-container">
+                            <input type="range" id="perception" min="30" max="100" step="5" value="50" oninput="updateParam('perception', this.value)">
+                            <span class="value-display" id="perception-value">50</span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label>Trail Length</label>
+                        <div class="slider-container">
+                            <input type="range" id="trailLength" min="3" max="20" step="1" value="10" oninput="updateParam('trailLength', this.value)">
+                            <span class="value-display" id="trailLength-value">10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Colors</h3>
+                    
+                    <div class="color-group">
+                        <label>Fast Birds (Warm)</label>
+                        <div class="color-picker-container">
+                            <input type="color" id="colorFast" value="#c4a35a" onchange="updateColor('colorFast', this.value)">
+                            <span class="color-value" id="colorFast-value">#c4a35a</span>
+                        </div>
+                    </div>
+
+                    <div class="color-group">
+                        <label>Medium Birds</label>
+                        <div class="color-picker-container">
+                            <input type="color" id="colorMedium" value="#b87a6a" onchange="updateColor('colorMedium', this.value)">
+                            <span class="color-value" id="colorMedium-value">#b87a6a</span>
+                        </div>
+                    </div>
+
+                    <div class="color-group">
+                        <label>Slow Birds (Cool)</label>
+                        <div class="color-picker-container">
+                            <input type="color" id="colorSlow" value="#5a8a87" onchange="updateColor('colorSlow', this.value)">
+                            <span class="color-value" id="colorSlow-value">#5a8a87</span>
+                        </div>
+                    </div>
+
+                    <button class="button" onclick="resetParameters()" style="margin-top: 1rem;">Reset to Defaults</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // CUSTOM CURSOR (matching portfolio)
+        // ═══════════════════════════════════════════════════════════════════════
+
+        const cursor = document.querySelector('.cursor');
+        const cursorDot = document.querySelector('.cursor-dot');
+        let mouseX = 0, mouseY = 0;
+        let cursorX = 0, cursorY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateCursor() {
+            cursorX += (mouseX - cursorX) * 0.15;
+            cursorY += (mouseY - cursorY) * 0.15;
+            
+            cursor.style.left = cursorX - 10 + 'px';
+            cursor.style.top = cursorY - 10 + 'px';
+            cursorDot.style.left = mouseX - 2 + 'px';
+            cursorDot.style.top = mouseY - 2 + 'px';
+            
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // Expand cursor on interactive elements
+        const interactiveElements = document.querySelectorAll('button, input, a, .button');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursor.classList.add('expanded');
+                cursorDot.classList.add('expanded');
+            });
+            el.addEventListener('mouseleave', () => {
+                cursor.classList.remove('expanded');
+                cursorDot.classList.remove('expanded');
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // MURMURATION PARAMETERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            seed: 42,
+            flockSize: 300,
+            cohesion: 1.0,
+            alignment: 1.2,
+            separation: 1.5,
+            perception: 50,
+            trailLength: 10,
+            colorFast: '#c4a35a',    // accent gold
+            colorMedium: '#b87a6a',  // coral
+            colorSlow: '#5a8a87'     // teal
+        };
+
+        let defaultParams = {...params};
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // MURMURATION SIMULATION
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let birds = [];
+        let attractors = [];
+        let time = 0;
+
+        function setup() {
+            let canvas = createCanvas(1000, 1000);
+            canvas.parent('canvas-container');
+            
+            initializeSystem();
+            
+            document.querySelector('.loading').style.display = 'none';
+        }
+
+        function initializeSystem() {
+            randomSeed(params.seed);
+            noiseSeed(params.seed);
+            
+            birds = [];
+            attractors = [];
+            time = 0;
+            
+            let centerX = width / 2;
+            let centerY = height / 2;
+            let spread = 150;
+            
+            for (let i = 0; i < params.flockSize; i++) {
+                let angle = random(TWO_PI);
+                let radius = random(spread) * sqrt(random());
+                let x = centerX + cos(angle) * radius;
+                let y = centerY + sin(angle) * radius;
+                birds.push(new Bird(x, y));
+            }
+            
+            // Create wandering attractors with pulse properties
+            let attractorColors = ['accent', 'coral', 'teal'];
+            for (let i = 0; i < 3; i++) {
+                attractors.push({
+                    x: random(200, width - 200),
+                    y: random(200, height - 200),
+                    vx: random(-0.5, 0.5),
+                    vy: random(-0.5, 0.5),
+                    strength: random(0.02, 0.05),
+                    pulsePhase: random(TWO_PI),
+                    pulseSpeed: random(0.03, 0.06),
+                    colorType: attractorColors[i]
+                });
+            }
+            
+            background(13, 12, 10);
+        }
+
+        function draw() {
+            // Subtle fade for trails
+            noStroke();
+            fill(13, 12, 10, 15);
+            rect(0, 0, width, height);
+            
+            time += 0.01;
+            
+            // Update attractors with smooth wandering
+            for (let attractor of attractors) {
+                attractor.vx += (noise(time + attractor.x * 0.01) - 0.5) * 0.02;
+                attractor.vy += (noise(time + 100 + attractor.y * 0.01) - 0.5) * 0.02;
+                
+                attractor.vx = constrain(attractor.vx, -0.8, 0.8);
+                attractor.vy = constrain(attractor.vy, -0.8, 0.8);
+                
+                attractor.x += attractor.vx;
+                attractor.y += attractor.vy;
+                
+                if (attractor.x < 150 || attractor.x > width - 150) attractor.vx *= -0.8;
+                if (attractor.y < 150 || attractor.y > height - 150) attractor.vy *= -0.8;
+                
+                attractor.x = constrain(attractor.x, 100, width - 100);
+                attractor.y = constrain(attractor.y, 100, height - 100);
+                
+                // Update blip pulse phase
+                attractor.pulsePhase += attractor.pulseSpeed;
+                if (attractor.pulsePhase > TWO_PI) {
+                    attractor.pulsePhase -= TWO_PI;
+                }
+                
+                // Draw ephemeral blip
+                drawAttractorBlip(attractor);
+            }
+            
+            let grid = buildSpatialHash();
+            
+            for (let bird of birds) {
+                bird.flock(grid);
+                bird.attractTo(attractors);
+                bird.update();
+                bird.edges();
+                bird.draw();
+            }
+        }
+
+        function buildSpatialHash() {
+            let cellSize = params.perception;
+            let grid = new Map();
+            
+            for (let bird of birds) {
+                let cellX = floor(bird.pos.x / cellSize);
+                let cellY = floor(bird.pos.y / cellSize);
+                let key = `${cellX},${cellY}`;
+                
+                if (!grid.has(key)) {
+                    grid.set(key, []);
+                }
+                grid.get(key).push(bird);
+            }
+            
+            return grid;
+        }
+
+        function getNeighbors(bird, grid) {
+            let cellSize = params.perception;
+            let cellX = floor(bird.pos.x / cellSize);
+            let cellY = floor(bird.pos.y / cellSize);
+            let neighbors = [];
+            
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    let key = `${cellX + dx},${cellY + dy}`;
+                    if (grid.has(key)) {
+                        neighbors = neighbors.concat(grid.get(key));
+                    }
+                }
+            }
+            
+            return neighbors;
+        }
+        
+        // Draw ephemeral blip that pulses and disperses
+        function drawAttractorBlip(attractor) {
+            let pulse = sin(attractor.pulsePhase);
+            let visibility = (pulse + 1) / 2;
+            
+            if (visibility < 0.1) return;
+            
+            let easedVis = visibility * visibility * (3 - 2 * visibility);
+            
+            // Get color based on attractor type
+            let baseColor;
+            if (attractor.colorType === 'accent') {
+                baseColor = color(196, 163, 90); // accent gold
+            } else if (attractor.colorType === 'coral') {
+                baseColor = color(184, 122, 106); // coral
+            } else {
+                baseColor = color(90, 138, 135); // teal
+            }
+            
+            push();
+            translate(attractor.x, attractor.y);
+            
+            // Multiple expanding rings
+            let numRings = 4;
+            for (let i = 0; i < numRings; i++) {
+                let ringPhase = (attractor.pulsePhase + i * 0.5) % TWO_PI;
+                let ringPulse = (sin(ringPhase) + 1) / 2;
+                
+                let maxRadius = 60 + i * 15;
+                let radius = ringPulse * maxRadius;
+                let alpha = (1 - ringPulse) * easedVis * 25;
+                
+                noFill();
+                stroke(red(baseColor), green(baseColor), blue(baseColor), alpha);
+                strokeWeight(map(ringPulse, 0, 1, 2, 0.5));
+                ellipse(0, 0, radius * 2, radius * 2);
+            }
+            
+            // Central soft glow
+            let glowAlpha = easedVis * 20;
+            let glowSize = 30 + pulse * 10;
+            
+            for (let r = glowSize; r > 0; r -= 5) {
+                let a = map(r, 0, glowSize, glowAlpha, 0);
+                fill(red(baseColor), green(baseColor), blue(baseColor), a);
+                noStroke();
+                ellipse(0, 0, r * 2, r * 2);
+            }
+            
+            // Tiny bright core
+            let coreAlpha = easedVis * 60 * (0.7 + 0.3 * sin(time * 10 + attractor.pulsePhase));
+            fill(red(baseColor), green(baseColor), blue(baseColor), coreAlpha);
+            ellipse(0, 0, 4, 4);
+            
+            pop();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // BIRD CLASS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        class Bird {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                this.vel = p5.Vector.random2D().mult(random(2, 4));
+                this.acc = createVector();
+                this.maxSpeed = 4;
+                this.maxForce = 0.15;
+                this.trail = [];
+            }
+            
+            flock(grid) {
+                let neighbors = getNeighbors(this, grid);
+                
+                let separation = this.separate(neighbors);
+                let alignment = this.align(neighbors);
+                let cohesion = this.cohere(neighbors);
+                
+                separation.mult(params.separation);
+                alignment.mult(params.alignment);
+                cohesion.mult(params.cohesion);
+                
+                this.acc.add(separation);
+                this.acc.add(alignment);
+                this.acc.add(cohesion);
+            }
+            
+            separate(neighbors) {
+                let steer = createVector();
+                let count = 0;
+                let desiredSep = 25;
+                
+                for (let other of neighbors) {
+                    let d = p5.Vector.dist(this.pos, other.pos);
+                    if (d > 0 && d < desiredSep) {
+                        let diff = p5.Vector.sub(this.pos, other.pos);
+                        diff.normalize();
+                        diff.div(d);
+                        steer.add(diff);
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    steer.div(count);
+                    steer.setMag(this.maxSpeed);
+                    steer.sub(this.vel);
+                    steer.limit(this.maxForce);
+                }
+                
+                return steer;
+            }
+            
+            align(neighbors) {
+                let sum = createVector();
+                let count = 0;
+                
+                for (let other of neighbors) {
+                    let d = p5.Vector.dist(this.pos, other.pos);
+                    if (d > 0 && d < params.perception) {
+                        sum.add(other.vel);
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    sum.div(count);
+                    sum.setMag(this.maxSpeed);
+                    let steer = p5.Vector.sub(sum, this.vel);
+                    steer.limit(this.maxForce);
+                    return steer;
+                }
+                
+                return createVector();
+            }
+            
+            cohere(neighbors) {
+                let sum = createVector();
+                let count = 0;
+                
+                for (let other of neighbors) {
+                    let d = p5.Vector.dist(this.pos, other.pos);
+                    if (d > 0 && d < params.perception) {
+                        sum.add(other.pos);
+                        count++;
+                    }
+                }
+                
+                if (count > 0) {
+                    sum.div(count);
+                    return this.seek(sum);
+                }
+                
+                return createVector();
+            }
+            
+            seek(target) {
+                let desired = p5.Vector.sub(target, this.pos);
+                desired.setMag(this.maxSpeed);
+                let steer = p5.Vector.sub(desired, this.vel);
+                steer.limit(this.maxForce);
+                return steer;
+            }
+            
+            attractTo(attractors) {
+                for (let attractor of attractors) {
+                    let target = createVector(attractor.x, attractor.y);
+                    let d = p5.Vector.dist(this.pos, target);
+                    
+                    if (d < 300) {
+                        let force = p5.Vector.sub(target, this.pos);
+                        force.setMag(attractor.strength * (1 - d / 300));
+                        this.acc.add(force);
+                    }
+                }
+            }
+            
+            update() {
+                let noiseVal = noise(this.pos.x * 0.01, this.pos.y * 0.01, time);
+                let noiseAngle = noiseVal * TWO_PI * 2;
+                let noiseForce = p5.Vector.fromAngle(noiseAngle).mult(0.02);
+                this.acc.add(noiseForce);
+                
+                this.vel.add(this.acc);
+                this.vel.limit(this.maxSpeed);
+                this.pos.add(this.vel);
+                this.acc.mult(0);
+                
+                this.trail.push(this.pos.copy());
+                if (this.trail.length > params.trailLength) {
+                    this.trail.shift();
+                }
+            }
+            
+            edges() {
+                let margin = 50;
+                let turnForce = 0.3;
+                
+                if (this.pos.x < margin) this.acc.x += turnForce;
+                if (this.pos.x > width - margin) this.acc.x -= turnForce;
+                if (this.pos.y < margin) this.acc.y += turnForce;
+                if (this.pos.y > height - margin) this.acc.y -= turnForce;
+            }
+            
+            draw() {
+                let speed = this.vel.mag();
+                let speedNorm = map(speed, 0, this.maxSpeed, 0, 1);
+                
+                let cFast = color(params.colorFast);
+                let cMed = color(params.colorMedium);
+                let cSlow = color(params.colorSlow);
+                
+                let birdColor;
+                if (speedNorm > 0.5) {
+                    birdColor = lerpColor(cMed, cFast, (speedNorm - 0.5) * 2);
+                } else {
+                    birdColor = lerpColor(cSlow, cMed, speedNorm * 2);
+                }
+                
+                // Draw trail
+                noFill();
+                beginShape();
+                for (let i = 0; i < this.trail.length; i++) {
+                    let alpha = map(i, 0, this.trail.length, 0, 180);
+                    let trailColor = color(red(birdColor), green(birdColor), blue(birdColor), alpha);
+                    stroke(trailColor);
+                    strokeWeight(map(i, 0, this.trail.length, 0.5, 2.5));
+                    let p = this.trail[i];
+                    curveVertex(p.x, p.y);
+                }
+                curveVertex(this.pos.x, this.pos.y);
+                endShape();
+                
+                // Draw bird body
+                let alpha = map(speedNorm, 0, 1, 200, 255);
+                fill(red(birdColor), green(birdColor), blue(birdColor), alpha);
+                noStroke();
+                
+                push();
+                translate(this.pos.x, this.pos.y);
+                rotate(this.vel.heading());
+                
+                let size = map(speedNorm, 0, 1, 3, 5);
+                beginShape();
+                vertex(size * 2, 0);
+                vertex(-size, size * 0.6);
+                vertex(-size * 0.5, 0);
+                vertex(-size, -size * 0.6);
+                endShape(CLOSE);
+                
+                pop();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UI CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateParam(paramName, value) {
+            let numValue = parseFloat(value);
+            params[paramName] = numValue;
+            document.getElementById(paramName + '-value').textContent = value;
+            
+            if (paramName === 'flockSize') {
+                initializeSystem();
+            }
+        }
+
+        function updateColor(colorId, value) {
+            params[colorId] = value;
+            document.getElementById(colorId + '-value').textContent = value;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEED CONTROL FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSeedDisplay() {
+            document.getElementById('seed-input').value = params.seed;
+        }
+
+        function updateSeed() {
+            let input = document.getElementById('seed-input');
+            let newSeed = parseInt(input.value);
+            if (newSeed && newSeed > 0) {
+                params.seed = newSeed;
+                initializeSystem();
+            } else {
+                updateSeedDisplay();
+            }
+        }
+
+        function previousSeed() {
+            params.seed = Math.max(1, params.seed - 1);
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function nextSeed() {
+            params.seed = params.seed + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function randomSeedAndUpdate() {
+            params.seed = Math.floor(Math.random() * 999999) + 1;
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        function resetParameters() {
+            params = {...defaultParams};
+            
+            document.getElementById('flockSize').value = params.flockSize;
+            document.getElementById('flockSize-value').textContent = params.flockSize;
+            document.getElementById('cohesion').value = params.cohesion;
+            document.getElementById('cohesion-value').textContent = params.cohesion;
+            document.getElementById('alignment').value = params.alignment;
+            document.getElementById('alignment-value').textContent = params.alignment;
+            document.getElementById('separation').value = params.separation;
+            document.getElementById('separation-value').textContent = params.separation;
+            document.getElementById('perception').value = params.perception;
+            document.getElementById('perception-value').textContent = params.perception;
+            document.getElementById('trailLength').value = params.trailLength;
+            document.getElementById('trailLength-value').textContent = params.trailLength;
+            
+            document.getElementById('colorFast').value = params.colorFast;
+            document.getElementById('colorFast-value').textContent = params.colorFast;
+            document.getElementById('colorMedium').value = params.colorMedium;
+            document.getElementById('colorMedium-value').textContent = params.colorMedium;
+            document.getElementById('colorSlow').value = params.colorSlow;
+            document.getElementById('colorSlow-value').textContent = params.colorSlow;
+            
+            updateSeedDisplay();
+            initializeSystem();
+        }
+
+        window.addEventListener('load', function() {
+            updateSeedDisplay();
+        });
+    </script>
+</body>
+</html>
