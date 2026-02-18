@@ -414,6 +414,13 @@
             margin-bottom: 0.5rem;
         }
 
+        .edu-school {
+            font-size: 0.8rem;
+            color: var(--text);
+            opacity: 0.5;
+            margin-bottom: 0.5rem;
+        }
+
         .edu-status {
             font-family: 'Space Mono', monospace;
             font-size: 0.6rem;
@@ -503,10 +510,26 @@
             color: var(--teal);
         }
 
+        .course.completed {
+            border-color: rgba(90, 138, 135, 0.3);
+            color: var(--teal);
+            opacity: 0.6;
+        }
+
+        .course.completed::before {
+            content: '✓ ';
+            font-size: 0.55rem;
+        }
+
         .course.active {
             background: var(--teal);
             border-color: var(--teal);
             color: var(--bg);
+        }
+
+        .course.upcoming {
+            border-color: rgba(255,255,255,0.06);
+            color: var(--text-dim);
         }
 
         /* PROJECTS */
@@ -959,6 +982,28 @@
             }
         }
 
+        /* A.M.D.G. fixed mark */
+        .amdg {
+            position: fixed;
+            top: 2.5rem;
+            right: 5vw;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            color: var(--text-dim);
+            z-index: 50;
+            opacity: 0;
+            animation: fadeIn 1s ease 1.8s forwards;
+            transition: opacity 0.5s ease;
+        }
+
+        @media (max-width: 900px) {
+            .amdg {
+                right: 6vw;
+                top: 1.5rem;
+            }
+        }
+
         /* Reveal animations */
         .reveal {
             opacity: 0;
@@ -979,6 +1024,7 @@
 <body>
     <div class="cursor"></div>
     <div class="cursor-dot"></div>
+    <div class="amdg">A.M.D.G.</div>
     <div id="cellular-canvas"></div>
 
     <main>
@@ -1005,12 +1051,13 @@
                     The most interesting problems live at the <em>boundaries</em> between fields.
                 </h2>
                 <div class="about-text reveal reveal-delay-1">
-                    <p>A decade in tech—systems administration, software engineering, data science, product management. Each role a different lens on the same truth: complexity yields to those who learn to see its patterns.</p>
-                    <p>Now, pursuing biotechnology. The same systems thinking that optimized servers and decoded datasets applies beautifully to understanding cellular machinery.</p>
+                    <p>Software engineer. Data scientist. Product manager. Fourteen years building systems that make complexity legible—from enterprise integrations and vehicle dispatching algorithms to product strategy for Ford's commercial businesses.</p>
+                    <p>The next chapter is biological. I'm deep in general and organic chemistry now, building toward an MS in Biotechnology. The conviction is simple: the frameworks that decode operational systems translate to molecular ones.</p>
+                    <p>The deeper you look, the more coherent it becomes—not less. What should feel improbable starts to feel inevitable. At every scale, the elegance of the design compels you deeper. That wonder is what drives all of this.</p>
                 </div>
                 <div class="stats reveal">
                     <div class="stat">
-                        <div class="stat-number">10+</div>
+                        <div class="stat-number">14</div>
                         <div class="stat-label">Years in Tech</div>
                     </div>
                     <div class="stat">
@@ -1038,23 +1085,27 @@
             <div class="education-track">
                 <div class="edu-card">
                     <div class="edu-degree">MS</div>
-                    <div class="edu-field">Data Science</div>
-                    <div class="edu-status">Completed</div>
+                    <div class="edu-field">Data Science & Business Analytics</div>
+                    <div class="edu-school">Wayne State University</div>
+                    <div class="edu-status">2017 – 2019</div>
                 </div>
                 <div class="edu-card">
                     <div class="edu-degree">MBA</div>
-                    <div class="edu-field">Business Administration</div>
-                    <div class="edu-status">Completed</div>
+                    <div class="edu-field">Finance & Information Systems</div>
+                    <div class="edu-school">Wayne State University</div>
+                    <div class="edu-status">2014 – 2017</div>
                 </div>
                 <div class="edu-card">
                     <div class="edu-degree">BA</div>
                     <div class="edu-field">Economics</div>
-                    <div class="edu-status">Completed</div>
+                    <div class="edu-school">Wayne State University</div>
+                    <div class="edu-status">2006 – 2011</div>
                 </div>
                 <div class="edu-card upcoming">
                     <div class="edu-degree">MS</div>
                     <div class="edu-field">Biotechnology</div>
-                    <div class="edu-status">2025 →</div>
+                    <div class="edu-school">Johns Hopkins University</div>
+                    <div class="edu-status">Target 2027</div>
                 </div>
             </div>
         </section>
@@ -1063,17 +1114,17 @@
         <section class="current-studies">
             <div class="current-bg-text">LEARNING</div>
             <div class="current-content reveal">
-                <div class="current-label">Currently</div>
-                <h3 class="current-title">Building foundations in the life sciences</h3>
-                <p class="current-text">Preparing for the MS in Biotechnology. Microbiology was a revelation. Gen Chem II now. Organic chemistry next.</p>
+                <div class="current-label">Pre-requisites → MS Biotechnology</div>
+                <h3 class="current-title">The road to molecular biology</h3>
+                <p class="current-text">Completing the science prerequisites for the MS in Biotechnology at Johns Hopkins. Currently in General Chemistry II, with organic chemistry ahead. Each course adds another layer to the foundation.</p>
                 <div class="course-list">
-                    <span class="course">Biology</span>
-                    <span class="course">Microbiology ★</span>
-                    <span class="course">A&P</span>
-                    <span class="course">Gen Chem I</span>
+                    <span class="course completed">Biology</span>
+                    <span class="course completed">Microbiology</span>
+                    <span class="course completed">A&P</span>
+                    <span class="course completed">Gen Chem I</span>
                     <span class="course active">Gen Chem II</span>
-                    <span class="course">Organic I</span>
-                    <span class="course">Organic II</span>
+                    <span class="course upcoming">Organic I</span>
+                    <span class="course upcoming">Organic II</span>
                 </div>
             </div>
         </section>
@@ -1170,6 +1221,7 @@
 
     <footer>
         <span>© 2025 Tony Leo</span>
+        <span>A.M.D.G.</span>
         <span>Built with curiosity</span>
     </footer>
 
@@ -1213,6 +1265,16 @@
         track.addEventListener('mouseleave', () => isDown = false);
         track.addEventListener('mouseup', () => isDown = false);
         track.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); track.scrollLeft = scrollLeft - (e.pageX - track.offsetLeft - startX) * 2; });
+
+        // Fade A.M.D.G. on scroll
+        const amdg = document.querySelector('.amdg');
+        let amdgIntro = true; // let the CSS intro animation finish first
+        setTimeout(() => { amdgIntro = false; }, 2800);
+        window.addEventListener('scroll', () => {
+            if (amdgIntro) return;
+            const t = Math.max(0, 1 - window.pageYOffset / 300);
+            amdg.style.opacity = t;
+        }, { passive: true });
 
         // Scroll reveal
         const observer = new IntersectionObserver((entries) => {
