@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Evolution of AI | Tony Leo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d1a65c' stroke-width='7'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%238fb7cc'/%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d0c0a;
-            --text: #e8e4dc;
-            --text-dim: #4a4845;
-            --accent: #c4a35a;
+            --bg: #15100a;
+            --text: #eae6dc;
+            --text-dim: #9a9280;
+            --accent: #d1a65c;
             --teal: #5a8a87;
             --coral: #b87a6a;
             --lavender: #8a7a9a;
@@ -34,42 +35,6 @@
             background: var(--bg);
             color: var(--text);
             overflow-x: hidden;
-            cursor: none;
-        }
-
-        /* Custom cursor */
-        .cursor {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            border: 1px solid var(--text);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.3s ease;
-            mix-blend-mode: difference;
-        }
-
-        .cursor.expanded {
-            width: 60px;
-            height: 60px;
-            border-color: var(--accent);
-            background: rgba(196, 163, 90, 0.1);
-        }
-
-        .cursor-dot {
-            position: fixed;
-            width: 4px;
-            height: 4px;
-            background: var(--text);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: background 0.3s ease;
-        }
-
-        .cursor-dot.expanded {
-            background: var(--accent);
         }
 
         /* Canvas */
@@ -94,10 +59,8 @@
             top: 2rem;
             left: 5vw;
             z-index: 100;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
             color: var(--text-dim);
             text-decoration: none;
             display: flex;
@@ -107,7 +70,7 @@
         }
 
         .back-link:hover {
-            color: var(--teal);
+            color: var(--accent);
         }
 
         .back-link svg {
@@ -130,7 +93,7 @@
         }
 
         .hero-label {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
@@ -146,10 +109,11 @@
         }
 
         .hero-title {
-            font-size: clamp(10vw, 18vw, 25vw);
-            font-weight: 700;
-            line-height: 0.85;
-            letter-spacing: -0.04em;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: clamp(8vw, 13vw, 18vw);
+            font-weight: 480;
+            line-height: 0.9;
+            letter-spacing: -0.025em;
         }
 
         .hero-title .line {
@@ -225,7 +189,7 @@
             bottom: 5vh;
             left: 50%;
             transform: translateX(-50%);
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.3em;
             text-transform: uppercase;
@@ -280,7 +244,7 @@
         }
 
         .section-label {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
@@ -384,7 +348,7 @@
         }
 
         .timeline-year {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.1em;
             color: var(--text-dim);
@@ -417,7 +381,7 @@
             overflow: hidden;
             transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
             opacity: 0;
-            background: rgba(13, 12, 10, 0.8);
+            background: rgba(21, 16, 10, 0.8);
             border: 1px solid rgba(90, 138, 135, 0.2);
             margin-top: 0;
         }
@@ -437,7 +401,7 @@
         }
 
         .timeline-detail-year {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 700;
             color: transparent;
@@ -457,7 +421,7 @@
         }
 
         .timeline-detail-tagline {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.7rem;
             letter-spacing: 0.1em;
             color: var(--accent);
@@ -480,7 +444,7 @@
         }
 
         .timeline-detail-relevance h4 {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -523,7 +487,7 @@
 
         /* Timeline hint */
         .timeline-hint {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.1em;
             color: var(--text-dim);
@@ -609,7 +573,7 @@
         }
 
         .evolution-count {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.7rem;
             letter-spacing: 0.15em;
             color: var(--text-dim);
@@ -691,7 +655,7 @@
         }
 
         .stage-number {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.2em;
             color: var(--text-dim);
@@ -710,7 +674,7 @@
         }
 
         .stage-era {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.7rem;
             letter-spacing: 0.1em;
             color: var(--teal);
@@ -758,7 +722,7 @@
         }
 
         .stage-block h4 {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -840,7 +804,7 @@
         }
 
         .stage-tag {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.55rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -868,7 +832,7 @@
 
         .conclusion-label {
             grid-column: 1 / 3;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
@@ -941,7 +905,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.1em;
             color: var(--text-dim);
@@ -1008,7 +972,7 @@
         /* Expand/collapse for mobile */
         .stage-expand-btn {
             display: none;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.6rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -1034,15 +998,13 @@
     </style>
 </head>
 <body>
-    <div class="cursor"></div>
-    <div class="cursor-dot"></div>
     <div id="neural-canvas"></div>
 
     <a href="index.html" class="back-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-        Back to Portfolio
+        Tony Leo
     </a>
 
     <main>
@@ -1089,7 +1051,7 @@
                             <p id="detail-relevance"></p>
                         </div>
                         <div class="timeline-detail-sources" id="detail-sources-container" style="display: none; margin-top: 1.5rem;">
-                            <h4 style="font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem;">Sources & Further Reading</h4>
+                            <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem;">Sources & Further Reading</h4>
                             <div id="detail-sources" style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
                         </div>
                     </div>
@@ -1149,7 +1111,7 @@
 
     <footer>
         <span>© 2025 Tony Leo • Content fact-checked with primary academic sources</span>
-        <a href="index.html">Return to Portfolio →</a>
+        <a href="index.html">← Tony Leo</a>
     </footer>
 
     <script>
@@ -1600,7 +1562,7 @@
                 sourcesDiv.innerHTML = event.sources.map(source => 
                     `<a href="${source.url}" target="_blank" rel="noopener noreferrer" 
                         style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 0.8rem; 
-                        font-family: 'Space Mono', monospace; font-size: 0.6rem; letter-spacing: 0.05em;
+                        font-family: 'Space Grotesk', sans-serif; font-size: 0.6rem; letter-spacing: 0.05em;
                         color: var(--teal); background: rgba(90, 138, 135, 0.1); 
                         border: 1px solid rgba(90, 138, 135, 0.2); text-decoration: none;
                         transition: all 0.3s ease;"
@@ -1714,33 +1676,6 @@
             const content = btn.nextElementSibling;
             content.classList.toggle('expanded');
             btn.textContent = content.classList.contains('expanded') ? 'Hide Details' : 'Show Details';
-        }
-
-        // Custom cursor
-        const cursor = document.querySelector('.cursor');
-        const cursorDot = document.querySelector('.cursor-dot');
-
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX - 10 + 'px';
-            cursor.style.top = e.clientY - 10 + 'px';
-            cursorDot.style.left = e.clientX - 2 + 'px';
-            cursorDot.style.top = e.clientY - 2 + 'px';
-        });
-
-        // Expand cursor on interactive elements
-        const interactiveElements = document.querySelectorAll('a, button, .stage-card, .timeline-event, .capability');
-        
-        function addCursorListeners() {
-            document.querySelectorAll('a, button, .stage-card, .timeline-event, .capability').forEach(el => {
-                el.addEventListener('mouseenter', () => {
-                    cursor.classList.add('expanded');
-                    cursorDot.classList.add('expanded');
-                });
-                el.addEventListener('mouseleave', () => {
-                    cursor.classList.remove('expanded');
-                    cursorDot.classList.remove('expanded');
-                });
-            });
         }
 
         // p5.js Neural Network Animation
@@ -1874,7 +1809,7 @@
                 targetScrollY = window.pageYOffset;
                 scrollY += (targetScrollY - scrollY) * 0.1;
 
-                p.background(13, 12, 10);
+                p.background(21, 16, 10);
 
                 // Vignette
                 let gradient = p.drawingContext.createRadialGradient(
@@ -1912,7 +1847,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderTimeline();
             renderStages();
-            addCursorListeners();
             new p5(sketch);
         });
     </script>

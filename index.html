@@ -3,1154 +3,595 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TONY LEO</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <title>Tony Leo</title>
+    <meta name="description" content="Tony Leo — software engineer, data scientist, and product manager with fourteen years in tech, now completing the prerequisites for an MS in Biotechnology at Johns Hopkins. From silicon to cytoplasm.">
+    <meta property="og:title" content="Tony Leo">
+    <meta property="og:description" content="From silicon to cytoplasm — fourteen years building software and data systems, now headed into molecular biology.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#0b0e11">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d1a65c' stroke-width='7'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%238fb7cc'/%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d0c0a;
-            --text: #e8e4dc;
-            --text-dim: #4a4845;
-            --accent: #c4a35a;
-            --teal: #5a8a87;
-            --coral: #b87a6a;
-            --lavender: #8a7a9a;
+            --bg-cold: #0b0e11;      /* silicon end of the page */
+            --bg-warm: #15100a;      /* cytoplasm end of the page */
+            --ink: #eae6dc;
+            --dim: #9a9280;
+            --silicon: #8fb7cc;      /* cool steel blue */
+            --cyto: #d1a65c;         /* warm amber */
+            --life: #8fae7c;         /* completed / living green */
+            --hairline: rgba(234, 230, 220, 0.08);
+            --serif: 'Fraunces', Georgia, serif;
+            --sans: 'Space Grotesk', system-ui, sans-serif;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html {
-            scroll-behavior: auto;
-        }
+        html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: var(--sans);
+            font-weight: 300;
+            background: linear-gradient(to bottom, var(--bg-cold) 0%, #0e0e0d 45%, var(--bg-warm) 100%);
+            background-color: var(--bg-cold);
+            color: var(--ink);
             overflow-x: hidden;
-            cursor: none;
+            line-height: 1.6;
         }
 
-        /* Custom cursor */
-        .cursor {
+        ::selection { background: rgba(209, 166, 92, 0.3); }
+
+        a:focus-visible,
+        button:focus-visible {
+            outline: 2px solid var(--cyto);
+            outline-offset: 4px;
+            border-radius: 2px;
+        }
+
+        /* Fixed canvas behind everything */
+        #phase-canvas {
             position: fixed;
-            width: 20px;
-            height: 20px;
-            border: 1px solid var(--text);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.3s ease;
-            mix-blend-mode: difference;
-        }
-
-        .cursor.expanded {
-            width: 60px;
-            height: 60px;
-            border-color: var(--accent);
-            background: rgba(196, 163, 90, 0.1);
-        }
-
-        .cursor-dot {
-            position: fixed;
-            width: 4px;
-            height: 4px;
-            background: var(--text);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: background 0.3s ease;
-        }
-
-        .cursor-dot.expanded {
-            background: var(--accent);
-        }
-
-        /* Canvas */
-        #cellular-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: 0;
         }
+        #phase-canvas canvas { display: block; }
 
-        /* Main container */
-        main {
-            position: relative;
-            z-index: 10;
+        main { position: relative; z-index: 10; }
+
+        /* A.M.D.G. mark */
+        .amdg {
+            position: fixed;
+            top: 2.2rem;
+            right: 5vw;
+            font-size: 0.72rem;
+            letter-spacing: 0.3em;
+            color: var(--dim);
+            z-index: 50;
+            opacity: 0;
+            animation: fadeIn 1.2s ease 1.6s forwards;
         }
 
-        /* HERO */
+        /* ---------- HERO ---------- */
         .hero {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            padding: 0 5vw;
             position: relative;
-            overflow: hidden;
         }
 
         .hero-name {
-            font-size: clamp(15vw, 25vw, 35vw);
-            font-weight: 700;
-            line-height: 0.85;
-            letter-spacing: -0.04em;
-            position: relative;
-            padding-left: 5vw;
-        }
-
-        .hero-name .line {
-            display: block;
+            font-family: var(--serif);
+            font-optical-sizing: auto;
+            font-size: clamp(3.6rem, 13vw, 10.5rem);
+            font-weight: 360;
+            line-height: 0.98;
+            letter-spacing: -0.025em;
             overflow: hidden;
         }
 
-        .hero-name .line:first-child {
-            transform: translateX(-2vw);
-        }
-
-        .hero-name .line:last-child {
-            color: transparent;
-            -webkit-text-stroke: 2px var(--text);
-            transform: translateX(8vw);
-        }
-
-        .hero-name .letter {
-            display: inline-block;
-            opacity: 0;
-            transform: translateY(100%) rotate(10deg);
-            animation: letterDrop 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes letterDrop {
-            to {
-                opacity: 1;
-                transform: translateY(0) rotate(0deg);
-            }
-        }
-
-        .hero-name .line:first-child .letter:nth-child(1) { animation-delay: 0.1s; }
-        .hero-name .line:first-child .letter:nth-child(2) { animation-delay: 0.15s; }
-        .hero-name .line:first-child .letter:nth-child(3) { animation-delay: 0.2s; }
-        .hero-name .line:first-child .letter:nth-child(4) { animation-delay: 0.25s; }
-        .hero-name .line:last-child .letter:nth-child(1) { animation-delay: 0.4s; }
-        .hero-name .line:last-child .letter:nth-child(2) { animation-delay: 0.45s; }
-        .hero-name .line:last-child .letter:nth-child(3) { animation-delay: 0.5s; }
-
-        .hero-descriptor {
-            position: absolute;
-            right: 5vw;
-            top: 50%;
-            transform: translateY(-50%);
-            text-align: right;
-            font-size: 0.75rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            writing-mode: vertical-rl;
-            opacity: 0;
-            animation: fadeIn 1s ease 1s forwards;
-        }
-
-        .hero-tagline {
-            position: absolute;
-            bottom: 15vh;
-            left: 5vw;
-            font-family: 'Space Mono', monospace;
-            font-size: clamp(0.7rem, 1.2vw, 1rem);
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--teal);
-            opacity: 0;
-            animation: slideIn 0.8s ease 0.8s forwards;
-        }
-
-        .hero-tagline::before {
-            content: '// ';
-            color: var(--text-dim);
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        .scroll-prompt {
-            position: absolute;
-            bottom: 5vh;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.3em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            opacity: 0;
-            animation: fadeIn 1s ease 1.5s forwards;
-        }
-
-        .scroll-prompt span {
+        .hero-name span {
             display: block;
-            animation: bounce 2s ease infinite;
+            transform: translateY(110%);
+            animation: riseUp 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(5px); }
+        @keyframes riseUp { to { transform: translateY(0); } }
+
+        .hero-phase {
+            margin-top: 2.2rem;
+            font-size: clamp(1.15rem, 2.6vw, 1.9rem);
+            opacity: 0;
+            animation: fadeIn 1s ease 0.9s forwards;
         }
 
-        /* ABOUT */
-        .about {
-            min-height: 100vh;
-            padding: 15vh 0;
-            position: relative;
+        .hero-phase .si {
+            font-family: var(--sans);
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            color: var(--silicon);
         }
 
-        .about-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 2rem;
-            padding: 0 5vw;
-        }
-
-        .about-label {
-            grid-column: 1 / 3;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--teal);
-            padding-top: 0.5rem;
-        }
-
-        .about-heading {
-            grid-column: 3 / 12;
-            font-size: clamp(2.5rem, 6vw, 5rem);
+        .hero-phase .arrow {
+            color: var(--dim);
+            padding: 0 0.35em;
+            font-family: var(--sans);
             font-weight: 300;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            margin-bottom: 4rem;
         }
 
-        .about-heading em {
+        .hero-phase .cy {
+            font-family: var(--serif);
             font-style: italic;
-            color: var(--accent);
+            font-weight: 400;
+            color: var(--cyto);
         }
 
-        .about-text {
-            grid-column: 4 / 10;
-            font-size: 1rem;
-            line-height: 1.9;
-            color: var(--text);
-            opacity: 0.8;
+        .hero-intro {
+            margin-top: 1.4rem;
+            max-width: 34em;
+            font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+            color: var(--ink);
+            opacity: 0;
+            animation: fadeInIntro 1s ease 1.25s forwards;
         }
 
-        .about-text p {
-            margin-bottom: 1.5rem;
-        }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeInIntro { to { opacity: 0.75; } }
 
-        .stats {
-            grid-column: 1 / -1;
+        .scroll-cue {
+            position: absolute;
+            bottom: 4.5vh;
+            left: 5vw;
             display: flex;
-            justify-content: space-between;
-            padding: 8rem 0;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            margin-top: 6rem;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.22em;
+            color: var(--dim);
+            opacity: 0;
+            animation: fadeIn 1s ease 1.8s forwards;
         }
 
-        .stat {
-            text-align: center;
-            position: relative;
+        .scroll-cue::before {
+            content: '';
+            width: 1px;
+            height: 42px;
+            background: linear-gradient(to bottom, var(--silicon), var(--cyto));
+            animation: cueGrow 2.4s ease-in-out infinite;
+            transform-origin: top;
         }
 
-        .stat-number {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            color: transparent;
-            -webkit-text-stroke: 2px var(--teal);
-            transition: all 0.3s ease;
+        @keyframes cueGrow {
+            0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+            50% { transform: scaleY(1); opacity: 1; }
         }
 
-        .stat:hover .stat-number {
-            color: var(--teal);
-            -webkit-text-stroke: 2px var(--teal);
+        /* ---------- SECTIONS (shared) ---------- */
+        section { padding: 16vh 5vw; position: relative; }
+
+        .section-rule {
+            width: 54px;
+            height: 2px;
+            margin-bottom: 1.6rem;
+            background: var(--rule, var(--silicon));
         }
 
-        .stat-label {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-top: 0.5rem;
-        }
-
-        /* EDUCATION */
-        .education {
-            padding: 10vh 0;
-            overflow: hidden;
-        }
-
-        .education-header {
-            padding: 0 5vw;
-            margin-bottom: 4rem;
-        }
-
-        .education-label {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--teal);
+        .section-title {
+            font-family: var(--serif);
+            font-size: clamp(2rem, 4.6vw, 3.6rem);
+            font-weight: 380;
+            letter-spacing: -0.015em;
+            line-height: 1.12;
             margin-bottom: 1rem;
         }
 
-        .education-title {
-            font-size: clamp(2rem, 5vw, 4rem);
-            font-weight: 300;
-            letter-spacing: -0.02em;
+        /* ---------- ABOUT ---------- */
+        .about-title { max-width: 16em; }
+        .about-title em { font-style: italic; }
+
+        .about-text {
+            max-width: 36em;
+            margin-top: 3rem;
+            font-family: var(--serif);
+            font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+            font-weight: 340;
+            line-height: 1.75;
         }
 
-        .education-track {
-            display: flex;
-            gap: 2rem;
-            padding: 0 5vw;
-            overflow-x: auto;
-            scrollbar-width: none;
-            cursor: grab;
-        }
+        .about-text p { margin-bottom: 1.6rem; opacity: 0.88; }
 
-        .education-track::-webkit-scrollbar {
-            display: none;
-        }
+        .about-text p:last-child { margin-bottom: 0; }
 
-        @media (max-width: 900px) {
-            .education-track {
-                flex-wrap: wrap;
-                overflow-x: visible;
-                cursor: auto;
-                padding: 0 6vw;
-                gap: 1.5rem;
-            }
-            
-            .edu-card {
-                flex: 1 1 calc(50% - 0.75rem);
-                min-width: 200px;
-                width: auto;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .education-track {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .edu-card {
-                flex: none;
-                width: 100%;
-            }
-        }
-
-        .edu-card {
-            flex: 0 0 auto;
-            width: 280px;
-            min-width: 280px;
-            padding: 2.5rem 2rem;
-            background: rgba(90, 138, 135, 0.03);
-            border: 1px solid rgba(90, 138, 135, 0.1);
-            transition: all 0.4s ease;
+        /* ---------- EDUCATION TIMELINE ---------- */
+        .timeline {
+            list-style: none;
+            margin-top: 4rem;
+            max-width: 620px;
             position: relative;
-            overflow: hidden;
+            padding-left: 1.5rem;
+            border-left: 1px solid var(--hairline);
         }
 
-        .edu-card::before {
+        .timeline li {
+            position: relative;
+            padding: 0 0 2.8rem 1.6rem;
+        }
+
+        .timeline li:last-child { padding-bottom: 0; }
+
+        .timeline li::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--teal), var(--accent));
-            transform: scaleX(0) translateZ(0);
-            transform-origin: left center;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            will-change: transform;
-            backface-visibility: hidden;
+            left: calc(-1.5rem - 5px);
+            top: 0.5em;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--bg-cold);
+            border: 2px solid var(--silicon);
         }
 
-        .edu-card:hover::before {
-            transform: scaleX(1) translateZ(0);
+        .timeline li.now::before {
+            border-color: var(--cyto);
+            background: var(--cyto);
+            box-shadow: 0 0 0 5px rgba(209, 166, 92, 0.15);
         }
 
-        .edu-card:hover {
-            background: rgba(90, 138, 135, 0.06);
-            transform: translateY(-8px);
+        .tl-years {
+            font-size: 0.78rem;
+            letter-spacing: 0.14em;
+            color: var(--dim);
         }
 
-        .edu-degree {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
-            color: var(--text);
+        .tl-degree {
+            font-family: var(--serif);
+            font-size: 1.45rem;
+            font-weight: 420;
+            margin: 0.25rem 0 0.1rem;
         }
 
-        .edu-field {
-            font-size: 0.95rem;
-            color: var(--teal);
-            margin-bottom: 0.5rem;
-        }
+        .timeline li.now .tl-degree { color: var(--cyto); }
 
-        .edu-school {
-            font-size: 0.8rem;
-            color: var(--text);
-            opacity: 0.5;
-            margin-bottom: 0.5rem;
-        }
+        .tl-school { font-size: 0.9rem; color: var(--ink); opacity: 0.55; }
 
-        .edu-status {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--text-dim);
-        }
-
-        .edu-card.upcoming {
-            border-color: rgba(196, 163, 90, 0.2);
-            background: rgba(196, 163, 90, 0.03);
-        }
-
-        .edu-card.upcoming .edu-degree {
-            color: transparent;
-            -webkit-text-stroke: 2px var(--accent);
-        }
-
-        /* Current studies */
-        .current-studies {
-            position: relative;
-            padding: 15vh 5vw;
-            overflow: hidden;
-        }
-
-        .current-bg-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(15vw, 25vw, 40vw);
-            font-weight: 700;
-            color: rgba(90, 138, 135, 0.03);
-            white-space: nowrap;
-            pointer-events: none;
-            letter-spacing: -0.05em;
-        }
-
-        .current-content {
-            position: relative;
-            z-index: 1;
-            max-width: 600px;
-        }
-
-        .current-label {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 2rem;
-        }
-
-        .current-title {
-            font-size: clamp(1.5rem, 3vw, 2.5rem);
-            font-weight: 400;
-            line-height: 1.3;
-            margin-bottom: 1.5rem;
-        }
-
-        .current-text {
-            font-size: 0.95rem;
-            line-height: 1.8;
-            color: var(--text);
+        /* ---------- COURSE PATHWAY ---------- */
+        .pathway-text {
+            max-width: 36em;
+            margin-top: 1rem;
+            font-size: 1rem;
             opacity: 0.7;
-            margin-bottom: 2rem;
+            line-height: 1.8;
         }
 
-        .course-list {
+        .pathway {
+            list-style: none;
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            align-items: center;
+            gap: 0.6rem 0;
+            margin-top: 3rem;
+            max-width: 760px;
         }
 
-        .course {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.05em;
-            padding: 0.5rem 1rem;
-            border: 1px solid rgba(90, 138, 135, 0.2);
-            background: rgba(90, 138, 135, 0.03);
-            transition: all 0.3s ease;
-        }
-
-        .course:hover {
-            border-color: var(--teal);
-            color: var(--teal);
-        }
-
-        .course.completed {
-            border-color: rgba(90, 138, 135, 0.3);
-            color: var(--teal);
-            opacity: 0.6;
-        }
-
-        .course.completed::before {
-            content: '✓ ';
-            font-size: 0.55rem;
-        }
-
-        .course.active {
-            background: var(--teal);
-            border-color: var(--teal);
-            color: var(--bg);
-        }
-
-        .course.upcoming {
-            border-color: rgba(255,255,255,0.06);
-            color: var(--text-dim);
-        }
-
-        /* PROJECTS */
-        .projects {
-            padding: 15vh 5vw;
-            position: relative;
-        }
-
-        .projects-header {
+        .pathway li {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 6rem;
+            align-items: center;
         }
 
-        .projects-title {
-            font-size: clamp(4rem, 12vw, 10rem);
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            line-height: 0.9;
+        .pathway li + li::before {
+            content: '\2192';
+            padding: 0 0.7rem;
+            color: var(--dim);
+            font-weight: 300;
         }
 
-        .projects-title span {
-            display: block;
+        .step {
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            padding: 0.55rem 1rem;
+            border: 1px solid var(--hairline);
+            border-radius: 999px;
+            white-space: nowrap;
         }
 
-        .projects-title span:last-child {
-            color: transparent;
-            -webkit-text-stroke: 2px var(--text);
-            margin-left: 10vw;
+        .step.done {
+            border-color: rgba(143, 174, 124, 0.35);
+            color: var(--life);
         }
 
-        .projects-count {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.7rem;
-            letter-spacing: 0.15em;
-            color: var(--text-dim);
+        .step.done::before { content: '\2713\00a0'; font-size: 0.75rem; }
+
+        .step.active {
+            background: var(--cyto);
+            border-color: var(--cyto);
+            color: #171208;
+            font-weight: 500;
+            animation: activePulse 3s ease-in-out infinite;
         }
 
+        @keyframes activePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(209, 166, 92, 0.25); }
+            50% { box-shadow: 0 0 0 7px rgba(209, 166, 92, 0); }
+        }
+
+        .step.next { color: var(--dim); border-style: dashed; }
+
+        /* ---------- PROJECTS ---------- */
         .projects-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.6rem;
+            margin-top: 4rem;
         }
 
         .project-card {
-            position: relative;
-            padding: 3rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.4s ease;
-            overflow: hidden;
-        }
-
-        .project-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(90,138,135,0.08) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .project-card:hover::after {
-            opacity: 1;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            padding: 2.6rem;
+            border: 1px solid var(--hairline);
+            background: rgba(234, 230, 220, 0.015);
+            transition: border-color 0.35s ease, background 0.35s ease, transform 0.35s ease;
         }
 
         .project-card:hover {
-            transform: scale(1.02);
-            border-color: rgba(90, 138, 135, 0.2);
+            border-color: rgba(209, 166, 92, 0.4);
+            background: rgba(209, 166, 92, 0.04);
+            transform: translateY(-4px);
         }
 
-        .project-card:nth-child(2)::after {
-            background: linear-gradient(135deg, rgba(196,163,90,0.08) 0%, transparent 50%);
+        .project-card.featured {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+            gap: 2rem;
+            align-items: end;
+            border-color: rgba(209, 166, 92, 0.25);
+            background: rgba(209, 166, 92, 0.03);
         }
 
-        .project-card:nth-child(2):hover {
-            border-color: rgba(196, 163, 90, 0.2);
+        .project-kind {
+            font-size: 0.72rem;
+            letter-spacing: 0.16em;
+            color: var(--dim);
+            margin-bottom: 1.3rem;
         }
 
-        .project-card:nth-child(3)::after {
-            background: linear-gradient(135deg, rgba(138,122,154,0.08) 0%, transparent 50%);
-        }
-
-        .project-card:nth-child(3):hover {
-            border-color: rgba(138, 122, 154, 0.2);
-        }
-
-        .project-card:nth-child(1)::after {
-            background: linear-gradient(135deg, rgba(122,154,106,0.08) 0%, transparent 50%);
-        }
-
-        .project-card:nth-child(1):hover {
-            border-color: rgba(122, 154, 106, 0.2);
-        }
-
-        .project-number {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6rem;
-            letter-spacing: 0.2em;
-            color: var(--text-dim);
-            margin-bottom: 2rem;
-        }
+        .featured .project-kind { color: var(--cyto); }
 
         .project-title {
-            font-size: 1.8rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
+            font-family: var(--serif);
+            font-size: 1.6rem;
+            font-weight: 420;
             letter-spacing: -0.01em;
+            margin-bottom: 0.8rem;
         }
 
+        .featured .project-title { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+
         .project-desc {
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             line-height: 1.7;
-            color: var(--text);
-            opacity: 0.6;
-            margin-bottom: 2rem;
+            opacity: 0.65;
         }
 
         .project-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
+            margin-top: 1.8rem;
         }
+
+        .featured .project-tags { margin-top: 0; justify-self: end; }
 
         .project-tag {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.55rem;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            padding: 0.4rem 0.8rem;
-            border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            padding: 0.35rem 0.8rem;
+            border: 1px solid var(--hairline);
+            border-radius: 999px;
+            color: var(--ink);
+            opacity: 0.7;
         }
 
-        .project-card.coming-soon {
-            border-style: dashed;
-            opacity: 0.6;
+        .project-visit {
+            display: inline-block;
+            margin-top: 1.6rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.06em;
+            color: var(--cyto);
+            border-bottom: 1px solid rgba(209, 166, 92, 0.4);
+            padding-bottom: 2px;
         }
 
-        /* CONTACT */
-        .contact {
-            min-height: 100vh;
+        /* ---------- CONTACT ---------- */
+        .contact-wrap {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            position: relative;
-        }
-
-        .contact-left {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 5vw;
-            background: rgba(90, 138, 135, 0.02);
-        }
-
-        .contact-label {
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--teal);
-            margin-bottom: 2rem;
-        }
-
-        .contact-title {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            line-height: 1;
-            margin-bottom: 2rem;
-        }
-
-        .contact-title span {
-            display: block;
-        }
-
-        .contact-title span:last-child {
-            color: var(--accent);
+            gap: 4rem;
+            align-items: center;
         }
 
         .contact-text {
-            font-size: 0.95rem;
+            max-width: 26em;
+            margin-top: 1rem;
+            font-size: 1rem;
+            opacity: 0.7;
             line-height: 1.8;
-            color: var(--text);
-            opacity: 0.6;
-            max-width: 400px;
         }
 
-        .contact-right {
+        .contact-links {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 1.5rem;
-            padding: 5vw;
+            gap: 1.2rem;
+            justify-self: center;
+            width: 100%;
+            max-width: 320px;
         }
 
         .contact-link {
             display: flex;
             align-items: center;
             gap: 1rem;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: var(--text);
+            font-size: 1.05rem;
+            font-weight: 400;
+            color: var(--ink);
             text-decoration: none;
-            padding: 1.5rem 2rem;
-            border: 1px solid rgba(90, 138, 135, 0.2);
-            background: rgba(90, 138, 135, 0.03);
-            width: 100%;
-            max-width: 300px;
-            transition: all 0.3s ease;
+            padding: 1.3rem 1.8rem;
+            border: 1px solid var(--hairline);
+            background: rgba(234, 230, 220, 0.015);
+            transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
         }
 
         .contact-link:hover {
-            background: var(--teal);
-            color: var(--bg);
-            border-color: var(--teal);
+            background: var(--cyto);
+            border-color: var(--cyto);
+            color: #171208;
         }
 
-        .contact-link svg {
-            width: 24px;
-            height: 24px;
-        }
+        .contact-link svg { width: 22px; height: 22px; flex-shrink: 0; }
 
-        /* Footer */
+        /* ---------- FOOTER ---------- */
         footer {
-            padding: 3rem 5vw;
+            position: relative;
+            z-index: 10;
+            padding: 2.6rem 5vw;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.6rem;
+            font-size: 0.72rem;
             letter-spacing: 0.1em;
-            color: var(--text-dim);
-            border-top: 1px solid rgba(255,255,255,0.05);
+            color: var(--dim);
+            border-top: 1px solid var(--hairline);
         }
 
-        /* Responsive */
-        @media (max-width: 1100px) {
-            .about-heading {
-                grid-column: 2 / 12;
-            }
-            
-            .about-text {
-                grid-column: 2 / 11;
-            }
-        }
-
+        /* ---------- RESPONSIVE ---------- */
         @media (max-width: 900px) {
-            .about-grid { display: block; padding: 0 6vw; }
-            .about-label { margin-bottom: 1rem; }
-            .about-heading { margin-bottom: 2rem; }
-            .stats { flex-wrap: wrap; gap: 3rem; justify-content: center; }
-            .stat { flex: 0 0 40%; }
+            section { padding: 12vh 6vw; }
+            .hero { padding: 0 6vw; }
+            .scroll-cue { left: 6vw; }
+            .amdg { right: 6vw; top: 1.6rem; }
             .projects-grid { grid-template-columns: 1fr; }
-            .projects-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-            .contact { grid-template-columns: 1fr; }
-            .contact-left, .contact-right { padding: 10vh 6vw; }
-            
-            .hero-descriptor {
-                display: none;
-            }
-            
-            .hero-name {
-                padding-left: 6vw;
-                padding-right: 6vw;
-            }
-            
-            .hero-name .line:first-child {
-                transform: translateX(0);
-            }
-            
-            .hero-name .line:last-child {
-                transform: translateX(2vw);
-            }
-            
-            .hero-tagline {
-                left: 6vw;
-                right: 6vw;
-                bottom: 18vh;
-            }
-            
-            .education-header,
-            .education-track {
-                padding: 0 6vw;
-            }
-            
-            .current-studies {
-                padding: 12vh 6vw;
-            }
-            
-            .projects {
-                padding: 12vh 6vw;
-            }
+            .project-card.featured { grid-template-columns: 1fr; align-items: start; }
+            .featured .project-tags { justify-self: start; margin-top: 1.8rem; }
+            .contact-wrap { grid-template-columns: 1fr; gap: 3rem; }
+            .contact-links { justify-self: start; }
         }
 
         @media (max-width: 600px) {
-            .hero-name {
-                font-size: clamp(18vw, 22vw, 28vw);
-            }
-            
-            .hero-tagline {
-                font-size: 0.65rem;
-                letter-spacing: 0.1em;
-            }
-            
-            .about-heading {
-                font-size: clamp(1.8rem, 7vw, 3rem);
-            }
-            
-            .stats {
-                gap: 2rem;
-                padding: 5rem 0;
-            }
-            
-            .stat {
-                flex: 0 0 45%;
-            }
-            
-            .stat-number {
-                font-size: clamp(2.5rem, 12vw, 4rem);
-            }
-            
-            .current-bg-text {
-                font-size: 20vw;
-            }
-            
-            .current-title {
-                font-size: clamp(1.3rem, 5vw, 2rem);
-            }
-            
-            .projects-title {
-                font-size: clamp(3rem, 15vw, 6rem);
-            }
-            
-            .projects-title span:last-child {
-                margin-left: 5vw;
-            }
-            
-            .project-card {
-                padding: 2rem;
-            }
-            
-            .project-title {
-                font-size: 1.4rem;
-            }
-            
-            .contact-title {
-                font-size: clamp(2.5rem, 12vw, 4rem);
-            }
-            
-            .contact-link {
-                padding: 1.2rem 1.5rem;
-                font-size: 1rem;
-            }
-            
-            footer {
-                flex-direction: column;
-                gap: 0.5rem;
-                text-align: center;
-            }
+            .project-card { padding: 1.8rem; }
+            .pathway li + li::before { padding: 0 0.45rem; }
+            footer { flex-direction: column; gap: 0.5rem; text-align: center; }
         }
 
-        /* Touch device optimizations */
-        @media (hover: none) and (pointer: coarse) {
-            .cursor,
-            .cursor-dot {
-                display: none !important;
-            }
-            
-            body {
-                cursor: auto;
-            }
-            
-            * {
-                cursor: auto;
-            }
-            
-            /* Larger touch targets */
-            .course {
-                padding: 0.7rem 1.2rem;
-                font-size: 0.7rem;
-            }
-            
-            .project-tag {
-                padding: 0.5rem 1rem;
-                font-size: 0.6rem;
-            }
-            
-            .contact-link {
-                padding: 1.4rem 1.8rem;
-            }
-            
-            /* Remove hover-dependent effects on touch */
-            .edu-card:hover {
-                transform: none;
-                background: rgba(90, 138, 135, 0.03);
-            }
-            
-            .project-card:hover {
-                transform: none;
-            }
-            
-            .stat:hover .stat-number {
-                color: transparent;
-                -webkit-text-stroke: 2px var(--teal);
-            }
-            
-            /* Add active states for touch feedback */
-            .edu-card:active {
-                background: rgba(90, 138, 135, 0.08);
-            }
-            
-            .project-card:active {
-                background: rgba(255,255,255,0.04);
-            }
-            
-            .contact-link:active {
-                background: var(--teal);
-                color: var(--bg);
-            }
-            
-            .course:active {
-                border-color: var(--teal);
-                color: var(--teal);
-            }
-        }
-
-        /* Reduce motion for users who prefer it */
+        /* ---------- REDUCED MOTION ---------- */
         @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
-            
-            .reveal {
-                opacity: 1;
-                transform: none;
-            }
-            
-            .hero-name .letter {
-                opacity: 1;
-                transform: none;
-            }
+            .hero-name span { transform: none; }
+            .hero-phase, .hero-intro, .scroll-cue, .amdg { opacity: 1; }
+            .hero-intro { opacity: 0.75; }
         }
-
-        /* A.M.D.G. fixed mark */
-        .amdg {
-            position: fixed;
-            top: 2.5rem;
-            right: 5vw;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75rem;
-            letter-spacing: 0.3em;
-            color: var(--text-dim);
-            z-index: 50;
-            opacity: 0;
-            animation: fadeIn 1s ease 1.8s forwards;
-            transition: opacity 0.5s ease;
-        }
-
-        @media (max-width: 900px) {
-            .amdg {
-                right: 6vw;
-                top: 1.5rem;
-            }
-        }
-
-        /* Reveal animations */
-        .reveal {
-            opacity: 0;
-            transform: translateY(60px);
-            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .reveal-delay-1 { transition-delay: 0.1s; }
-        .reveal-delay-2 { transition-delay: 0.2s; }
-        .reveal-delay-3 { transition-delay: 0.3s; }
     </style>
 </head>
 <body>
-    <div class="cursor"></div>
-    <div class="cursor-dot"></div>
-    <div class="amdg">A.M.D.G.</div>
-    <div id="cellular-canvas"></div>
+    <div class="amdg" aria-label="Ad majorem Dei gloriam">A.M.D.G.</div>
+    <div id="phase-canvas" aria-hidden="true"></div>
 
     <main>
         <!-- HERO -->
         <section class="hero">
-            <h1 class="hero-name">
-                <span class="line">
-                    <span class="letter">T</span><span class="letter">O</span><span class="letter">N</span><span class="letter">Y</span>
-                </span>
-                <span class="line">
-                    <span class="letter">L</span><span class="letter">E</span><span class="letter">O</span>
-                </span>
-            </h1>
-            <p class="hero-descriptor">Systems / Data / Biology</p>
-            <p class="hero-tagline">From Silicon to Cytoplasm</p>
-            <div class="scroll-prompt"><span>Scroll to explore</span></div>
+            <h1 class="hero-name"><span>Tony Leo</span></h1>
+            <p class="hero-phase">
+                <span class="si">from silicon</span><span class="arrow">&mdash;</span><span class="cy">to cytoplasm</span>
+            </p>
+            <p class="hero-intro">Fourteen years building software, data, and product systems. Now retraining for molecular biology. As you scroll, the page makes the same transition.</p>
+            <div class="scroll-cue" aria-hidden="true">Scroll</div>
         </section>
 
         <!-- ABOUT -->
-        <section class="about">
-            <div class="about-grid">
-                <div class="about-label reveal">001 / About</div>
-                <h2 class="about-heading reveal">
-                    The most interesting problems live at the <em>boundaries</em> between fields.
-                </h2>
-                <div class="about-text reveal reveal-delay-1">
-                    <p>Software engineer. Data scientist. Product manager. Fourteen years building systems that make complexity legible—from enterprise integrations and vehicle dispatching algorithms to product strategy for Ford's commercial businesses.</p>
-                    <p>The next chapter is biological. I'm deep in general and organic chemistry now, building toward an MS in Biotechnology. The conviction is simple: the frameworks that decode operational systems translate to molecular ones.</p>
-                    <p>The deeper you look, the more coherent it becomes—not less. What should feel improbable starts to feel inevitable. At every scale, the elegance of the design compels you deeper. That wonder is what drives all of this.</p>
-                </div>
-                <div class="stats reveal">
-                    <div class="stat">
-                        <div class="stat-number">14</div>
-                        <div class="stat-label">Years in Tech</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number">03</div>
-                        <div class="stat-label">Degrees Earned</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number">01</div>
-                        <div class="stat-label">In Progress</div>
-                    </div>
-                    <div class="stat">
-                        <div class="stat-number">∞</div>
-                        <div class="stat-label">Curiosity</div>
-                    </div>
-                </div>
+        <section class="about" id="about">
+            <div class="section-rule" style="--rule: var(--silicon)"></div>
+            <h2 class="section-title about-title">The most interesting problems live at the <em>boundaries</em> between fields.</h2>
+            <div class="about-text">
+                <p>Software engineer. Data scientist. Product manager. Fourteen years building systems that make complexity legible&mdash;from enterprise integrations and vehicle dispatching algorithms to product strategy for Ford's commercial businesses.</p>
+                <p>The next chapter is biological. I'm deep in general and organic chemistry now, building toward an MS in Biotechnology. The conviction is simple: the frameworks that decode operational systems translate to molecular ones.</p>
+                <p>The deeper you look, the more coherent it becomes&mdash;not less. What should feel improbable starts to feel inevitable. At every scale, the elegance of the design compels you deeper. That wonder is what drives all of this.</p>
             </div>
         </section>
 
         <!-- EDUCATION -->
-        <section class="education">
-            <div class="education-header">
-                <div class="education-label reveal">002 / Education</div>
-                <h2 class="education-title reveal">Continuous accumulation</h2>
-            </div>
-            <div class="education-track">
-                <div class="edu-card">
-                    <div class="edu-degree">MS</div>
-                    <div class="edu-field">Data Science & Business Analytics</div>
-                    <div class="edu-school">Wayne State University</div>
-                    <div class="edu-status">2017 – 2019</div>
-                </div>
-                <div class="edu-card">
-                    <div class="edu-degree">MBA</div>
-                    <div class="edu-field">Finance & Information Systems</div>
-                    <div class="edu-school">Wayne State University</div>
-                    <div class="edu-status">2014 – 2017</div>
-                </div>
-                <div class="edu-card">
-                    <div class="edu-degree">BA</div>
-                    <div class="edu-field">Economics</div>
-                    <div class="edu-school">Wayne State University</div>
-                    <div class="edu-status">2006 – 2011</div>
-                </div>
-                <div class="edu-card upcoming">
-                    <div class="edu-degree">MS</div>
-                    <div class="edu-field">Biotechnology</div>
-                    <div class="edu-school">Johns Hopkins University</div>
-                    <div class="edu-status">Target 2027</div>
-                </div>
-            </div>
+        <section class="education" id="education">
+            <div class="section-rule" style="--rule: color-mix(in oklab, var(--silicon) 65%, var(--cyto))"></div>
+            <h2 class="section-title">Continuous accumulation</h2>
+            <ol class="timeline">
+                <li>
+                    <div class="tl-years">2006 &ndash; 2011</div>
+                    <div class="tl-degree">BA, Economics</div>
+                    <div class="tl-school">Wayne State University</div>
+                </li>
+                <li>
+                    <div class="tl-years">2014 &ndash; 2017</div>
+                    <div class="tl-degree">MBA, Finance &amp; Information Systems</div>
+                    <div class="tl-school">Wayne State University</div>
+                </li>
+                <li>
+                    <div class="tl-years">2017 &ndash; 2019</div>
+                    <div class="tl-degree">MS, Data Science &amp; Business Analytics</div>
+                    <div class="tl-school">Wayne State University</div>
+                </li>
+                <li class="now">
+                    <div class="tl-years">In progress &middot; target 2027</div>
+                    <div class="tl-degree">MS, Biotechnology</div>
+                    <div class="tl-school">Johns Hopkins University</div>
+                </li>
+            </ol>
         </section>
 
-        <!-- CURRENT STUDIES -->
-        <section class="current-studies">
-            <div class="current-bg-text">LEARNING</div>
-            <div class="current-content reveal">
-                <div class="current-label">Pre-requisites → MS Biotechnology</div>
-                <h3 class="current-title">The road to molecular biology</h3>
-                <p class="current-text">Completing the science prerequisites for the MS in Biotechnology at Johns Hopkins. Currently in General Chemistry II, with organic chemistry ahead. Each course adds another layer to the foundation.</p>
-                <div class="course-list">
-                    <span class="course completed">Biology</span>
-                    <span class="course completed">Microbiology</span>
-                    <span class="course completed">A&P</span>
-                    <span class="course completed">Gen Chem I</span>
-                    <span class="course active">Gen Chem II</span>
-                    <span class="course upcoming">Organic I</span>
-                    <span class="course upcoming">Organic II</span>
-                </div>
-            </div>
+        <!-- COURSE PATHWAY -->
+        <section class="courses" id="courses">
+            <div class="section-rule" style="--rule: color-mix(in oklab, var(--silicon) 35%, var(--cyto))"></div>
+            <h2 class="section-title">The road to molecular biology</h2>
+            <p class="pathway-text">Completing the science prerequisites for the MS in Biotechnology at Johns Hopkins. Currently in General Chemistry II, with organic chemistry ahead. Each course adds another layer to the foundation.</p>
+            <ol class="pathway">
+                <li><span class="step done">Biology</span></li>
+                <li><span class="step done">Microbiology</span></li>
+                <li><span class="step done">A&amp;P</span></li>
+                <li><span class="step done">Gen Chem I</span></li>
+                <li><span class="step active">Gen Chem II</span></li>
+                <li><span class="step next">Organic I</span></li>
+                <li><span class="step next">Organic II</span></li>
+            </ol>
         </section>
 
         <!-- PROJECTS -->
-        <section class="projects">
-            <div class="projects-header">
-                <h2 class="projects-title reveal">
-                    <span>Selected</span>
-                    <span>Works</span>
-                </h2>
-                <div class="projects-count reveal">05 Projects</div>
-            </div>
+        <section class="projects" id="work">
+            <div class="section-rule" style="--rule: var(--cyto)"></div>
+            <h2 class="section-title">Selected works</h2>
             <div class="projects-grid">
-                <a href="https://acidbase-mastery.web.app/#/" target="_blank" class="project-card reveal" style="text-decoration: none; color: inherit;">
-                    <div class="project-number">001</div>
-                    <h3 class="project-title">Acid-Base Mastery</h3>
-                    <p class="project-desc">Interactive learning module for acid-base chemistry. Visualizations, ICE tables, titration curves, buffers, and a problem bank spanning Arrhenius through Henderson-Hasselbalch.</p>
+                <a href="https://acidbase-mastery.web.app/#/" target="_blank" rel="noopener" class="project-card featured">
+                    <div>
+                        <div class="project-kind">Featured &middot; live app</div>
+                        <h3 class="project-title">Acid-Base Mastery</h3>
+                        <p class="project-desc">Interactive learning module for acid-base chemistry. Visualizations, ICE tables, titration curves, buffers, and a problem bank spanning Arrhenius through Henderson-Hasselbalch.</p>
+                        <span class="project-visit">Open the app</span>
+                    </div>
                     <div class="project-tags">
                         <span class="project-tag">Firebase</span>
                         <span class="project-tag">Chemistry</span>
                         <span class="project-tag">Educational</span>
                     </div>
                 </a>
-                <a href="lechatelier.html" class="project-card reveal reveal-delay-1" style="text-decoration: none; color: inherit;">
-                    <div class="project-number">002</div>
+                <a href="lechatelier.html" class="project-card">
+                    <div class="project-kind">Interactive visualization</div>
                     <h3 class="project-title">Le Chatelier's Principle</h3>
                     <p class="project-desc">Interactive chemistry visualization exploring chemical equilibrium dynamics. Disturb the system and watch it shift to restore balance.</p>
                     <div class="project-tags">
@@ -1159,8 +600,8 @@
                         <span class="project-tag">Educational</span>
                     </div>
                 </a>
-                <a href="murmuration_flow.html" class="project-card reveal reveal-delay-2" style="text-decoration: none; color: inherit;">
-                    <div class="project-number">003</div>
+                <a href="murmuration_flow.html" class="project-card">
+                    <div class="project-kind">Algorithmic art</div>
                     <h3 class="project-title">Murmuration Flow</h3>
                     <p class="project-desc">Interactive algorithmic art implementing Craig Reynolds' Boid flocking algorithm. Starling dynamics rendered in code.</p>
                     <div class="project-tags">
@@ -1169,8 +610,8 @@
                         <span class="project-tag">Swarm</span>
                     </div>
                 </a>
-                <a href="stigmergic-emergence-portfolio.html" class="project-card reveal reveal-delay-3" style="text-decoration: none; color: inherit;">
-                    <div class="project-number">004</div>
+                <a href="stigmergic-emergence-portfolio.html" class="project-card">
+                    <div class="project-kind">Simulation</div>
                     <h3 class="project-title">Stigmergic Emergence</h3>
                     <p class="project-desc">Ant colony optimization. Pheromone trails. Emergent collective behavior from simple rules.</p>
                     <div class="project-tags">
@@ -1179,10 +620,10 @@
                         <span class="project-tag">ACO</span>
                     </div>
                 </a>
-                <a href="ai-evolution-tutorial.html" class="project-card reveal" style="text-decoration: none; color: inherit;">
-                    <div class="project-number">005</div>
+                <a href="ai-evolution-tutorial.html" class="project-card">
+                    <div class="project-kind">Interactive tutorial</div>
                     <h3 class="project-title">The Evolution of AI</h3>
-                    <p class="project-desc">Interactive tutorial exploring 80+ years of AI history—from statistical methods to modern large language models like Claude.</p>
+                    <p class="project-desc">Interactive tutorial exploring 80+ years of AI history&mdash;from statistical methods to modern large language models like Claude.</p>
                     <div class="project-tags">
                         <span class="project-tag">P5.js</span>
                         <span class="project-tag">Educational</span>
@@ -1193,450 +634,414 @@
         </section>
 
         <!-- CONTACT -->
-        <section class="contact">
-            <div class="contact-left reveal">
-                <div class="contact-label">003 / Connect</div>
-                <h2 class="contact-title">
-                    <span>Let's</span>
-                    <span>talk.</span>
-                </h2>
-                <p class="contact-text">Interested in collaboration, questions, or geeking out about cell biology and algorithmic art.</p>
-            </div>
-            <div class="contact-right reveal reveal-delay-1">
-                <a href="https://github.com/leomane" target="_blank" class="contact-link">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                    GitHub
-                </a>
-                <a href="https://www.linkedin.com/in/anthonyleo888/" target="_blank" class="contact-link">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                    LinkedIn
-                </a>
-                <a href="https://www.instagram.com/emergent.patterns" target="_blank" class="contact-link">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                    Instagram
-                </a>
+        <section class="contact" id="contact">
+            <div class="contact-wrap">
+                <div>
+                    <div class="section-rule" style="--rule: var(--cyto)"></div>
+                    <h2 class="section-title">Let's talk.</h2>
+                    <p class="contact-text">Interested in collaboration, questions, or geeking out about cell biology and algorithmic art.</p>
+                </div>
+                <div class="contact-links">
+                    <a href="https://github.com/leomane" target="_blank" rel="noopener" class="contact-link">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                        GitHub
+                    </a>
+                    <a href="https://www.linkedin.com/in/anthonyleo888/" target="_blank" rel="noopener" class="contact-link">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://www.instagram.com/emergent.patterns" target="_blank" rel="noopener" class="contact-link">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                        Instagram
+                    </a>
+                </div>
             </div>
         </section>
     </main>
 
     <footer>
-        <span>© 2025 Tony Leo</span>
+        <span>&copy; <span id="year">2025</span> Tony Leo</span>
         <span>A.M.D.G.</span>
         <span>Built with curiosity</span>
     </footer>
 
     <script>
-        // Custom cursor
-        const cursor = document.querySelector('.cursor');
-        const cursorDot = document.querySelector('.cursor-dot');
-        let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
-        
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            cursorDot.style.left = mouseX - 2 + 'px';
-            cursorDot.style.top = mouseY - 2 + 'px';
-        });
-        
-        function animateCursor() {
-            cursorX += (mouseX - cursorX) * 0.15;
-            cursorY += (mouseY - cursorY) * 0.15;
-            cursor.style.left = cursorX - 10 + 'px';
-            cursor.style.top = cursorY - 10 + 'px';
-            requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
-        
-        document.querySelectorAll('a, button, .project-card, .edu-card, .stat, .course').forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                cursor.classList.add('expanded');
-                cursorDot.classList.add('expanded');
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.classList.remove('expanded');
-                cursorDot.classList.remove('expanded');
-            });
-        });
+        document.getElementById('year').textContent = new Date().getFullYear();
 
-        // Horizontal scroll for education
-        const track = document.querySelector('.education-track');
-        let isDown = false, startX, scrollLeft;
-        track.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft; });
-        track.addEventListener('mouseleave', () => isDown = false);
-        track.addEventListener('mouseup', () => isDown = false);
-        track.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); track.scrollLeft = scrollLeft - (e.pageX - track.offsetLeft - startX) * 2; });
-
-        // Fade A.M.D.G. on scroll
+        // Fade A.M.D.G. as the hero scrolls away.
+        // The intro animation has fill:forwards, which outranks inline styles,
+        // so clear it once it finishes before letting scroll drive opacity.
         const amdg = document.querySelector('.amdg');
-        let amdgIntro = true; // let the CSS intro animation finish first
-        setTimeout(() => { amdgIntro = false; }, 2800);
-        window.addEventListener('scroll', () => {
-            if (amdgIntro) return;
-            const t = Math.max(0, 1 - window.pageYOffset / 300);
-            amdg.style.opacity = t;
-        }, { passive: true });
-
-        // Scroll reveal
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        const amdgFade = () => {
+            amdg.style.opacity = Math.max(0, 1 - window.pageYOffset / 400);
+        };
+        amdg.addEventListener('animationend', () => {
+            amdg.style.animation = 'none';
+            amdgFade();
+            window.addEventListener('scroll', amdgFade, { passive: true });
+        });
     </script>
 
-    <!-- Cellular parallax background -->
+    <!-- Phase-transition background: silicon lattice -> cellular drift, driven by scroll -->
     <script>
         const sketch = (p) => {
-            let scrollY = 0;
-            let targetScrollY = 0;
-            let mouse = { x: 0, y: 0 };
-            
-            let nucleus;
-            let proteins = [];
-            let vesicles = [];
-            let ribosomes = [];
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            const PALETTE = {
-                proteins: [
-                    [90, 138, 135],   // teal
-                    [138, 122, 154],  // lavender
-                    [196, 163, 90],   // ochre
-                    [184, 122, 106],  // coral
-                    [122, 154, 122],  // sage
-                ],
-                nucleus: [140, 125, 100],
-                nucleusInner: [60, 55, 48],
+            // Morph factor: 0 = ordered silicon lattice, 1 = organic cytoplasm
+            let m = 0;
+            let scrollSmooth = 0;
+            let mouse = { x: -9999, y: -9999 };
+
+            const COOL = [143, 183, 204];       // silicon steel blue
+            const ORGANIC = [
+                [90, 138, 135],   // teal
+                [138, 122, 154],  // lavender
+                [209, 166, 92],   // amber
+                [184, 122, 106],  // coral
+                [122, 154, 122],  // sage
+            ];
+            const NUCLEUS = [150, 130, 95];
+
+            const GRID = 130;                   // lattice spacing, px
+            let particles = [];
+            let vesicles = [];
+            let motes = [];
+            let nucleus;
+            let pads = [];                      // small static lattice pads
+
+            const lerp3 = (a, b, t) => [
+                a[0] + (b[0] - a[0]) * t,
+                a[1] + (b[1] - a[1]) * t,
+                a[2] + (b[2] - a[2]) * t,
+            ];
+
+            const smoothstep = (t) => t * t * (3 - 2 * t);
+
+            // Parallax offsets grow with scroll, so wrap positions back onto
+            // the canvas (with a margin) to keep the organic phase populated.
+            const MARGIN = 120;
+            const wrapY = (y) => {
+                const span = p.height + MARGIN * 2;
+                return ((y + MARGIN) % span + span) % span - MARGIN;
             };
 
-            // Nucleus - subtle, massive background presence
-            class Nucleus {
-                constructor() {
-                    this.parallax = 0.08; // Very slow - feels far back
-                    this.breathe = 0;
-                    this.noiseOff = p.random(1000);
-                    this.points = 16;
-                    this.radii = [];
-                    for (let i = 0; i < this.points; i++) {
-                        this.radii.push(p.random(0.92, 1.08));
-                    }
-                    this.resize();
-                }
-                
-                resize() {
-                    this.x = p.width * 0.7;
-                    this.baseY = p.height * 0.45;
-                    this.size = Math.min(p.width, p.height) * 0.6;
-                    this.size = p.constrain(this.size, 300, 700);
-                }
-                
-                update() {
-                    this.breathe += 0.003;
-                }
-                
-                getY() {
-                    return this.baseY + scrollY * this.parallax;
-                }
-                
-                draw() {
-                    let breath = p.sin(this.breathe) * 0.01 + 1;
-                    let size = this.size * breath;
-                    let y = this.getY();
-                    
-                    p.push();
-                    p.translate(this.x, y);
-                    
-                    // Very subtle inner glow
-                    for (let i = 4; i > 0; i--) {
-                        let alpha = p.map(i, 4, 0, 3, 12);
-                        p.noStroke();
-                        p.fill(PALETTE.nucleus[0], PALETTE.nucleus[1], PALETTE.nucleus[2], alpha);
-                        this.drawShape(size * (0.7 + i * 0.08));
-                    }
-                    
-                    // Subtle membrane
-                    p.noFill();
-                    p.stroke(PALETTE.nucleus[0], PALETTE.nucleus[1], PALETTE.nucleus[2], 12);
-                    p.strokeWeight(2);
-                    this.drawShape(size);
-                    
-                    p.stroke(PALETTE.nucleus[0], PALETTE.nucleus[1], PALETTE.nucleus[2], 6);
-                    p.strokeWeight(8);
-                    this.drawShape(size * 1.02);
-                    
-                    p.pop();
-                }
-                
-                drawShape(size) {
-                    p.beginShape();
-                    for (let i = 0; i <= this.points; i++) {
-                        let angle = (i / this.points) * p.TWO_PI;
-                        let idx = i % this.points;
-                        let r = size * 0.5 * this.radii[idx];
-                        r *= 0.97 + p.noise(this.noiseOff + i * 0.3, p.frameCount * 0.001) * 0.06;
-                        p.curveVertex(p.cos(angle) * r, p.sin(angle) * r * 0.85);
-                    }
-                    p.endShape(p.CLOSE);
-                }
+            function targetMorph() {
+                const vh = p.windowHeight || 1;
+                const raw = p.constrain(window.pageYOffset / (vh * 2.6), 0, 1);
+                return smoothstep(raw);
             }
 
-            // Organic protein blobs
-            class Protein {
-                constructor(layer) {
-                    this.layer = layer; // 0=back, 1=mid, 2=front
-                    this.parallax = layer === 0 ? 0.15 : (layer === 1 ? 0.3 : 0.5);
-                    this.reset();
-                }
-                
-                reset() {
-                    this.x = p.random(p.width);
-                    this.baseY = p.random(p.height);
-                    this.vx = p.random(-0.2, 0.2);
-                    this.vy = p.random(-0.2, 0.2);
-                    this.size = p.random(20, 50) * (this.layer === 0 ? 0.7 : (this.layer === 1 ? 1 : 1.3));
-                    this.color = PALETTE.proteins[p.floor(p.random(PALETTE.proteins.length))];
-                    this.noiseOff = p.random(1000);
-                    this.rotation = p.random(p.TWO_PI);
-                    this.rotSpeed = p.random(-0.002, 0.002);
+            // A particle that lives on the lattice and gradually learns to wander
+            class Particle {
+                constructor(gx, gy) {
+                    this.home = { gx, gy };
+                    this.noiseA = p.random(1000);
+                    this.noiseB = p.random(1000);
+                    this.size = p.random(26, 54);
+                    this.color = ORGANIC[p.floor(p.random(ORGANIC.length))];
+                    this.rotSeed = p.random(p.TWO_PI);
+                    this.rotSpeed = p.random(-0.0025, 0.0025);
                     this.breathe = p.random(p.TWO_PI);
-                    
-                    this.points = 7;
+                    this.parallax = p.random(0.1, 0.4);
+                    this.points = 40;
                     this.radii = [];
+                    const lobes = p.random([4, 5]);
                     for (let i = 0; i < this.points; i++) {
-                        this.radii.push(p.random(0.6, 1.0));
+                        // gentle organic lobing baked per-particle, revealed as m rises
+                        const ang = (i / this.points) * p.TWO_PI;
+                        this.radii.push(1 + 0.13 * Math.sin(ang * lobes + this.rotSeed));
                     }
+                    this.fx = 0; this.fy = 0; // accumulated mouse push
                 }
-                
-                update() {
-                    // Noise drift
-                    this.vx += (p.noise(this.noiseOff, p.frameCount * 0.002) - 0.5) * 0.015;
-                    this.vy += (p.noise(this.noiseOff + 500, p.frameCount * 0.002) - 0.5) * 0.015;
-                    
-                    // Mouse influence (subtle)
-                    let dx = this.x - mouse.x;
-                    let dy = this.getY() - mouse.y;
-                    let dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 150 && dist > 0) {
-                        let force = (150 - dist) / 150 * 0.3;
-                        this.vx += (dx / dist) * force;
-                        this.vy += (dy / dist) * force;
-                    }
-                    
-                    // Damping
-                    this.vx *= 0.98;
-                    this.vy *= 0.98;
-                    
-                    this.x += this.vx;
-                    this.baseY += this.vy;
-                    
-                    this.rotation += this.rotSpeed;
+
+                homeXY() {
+                    return {
+                        x: this.home.gx * GRID + GRID * 0.5,
+                        y: this.home.gy * GRID + GRID * 0.5,
+                    };
+                }
+
+                pos(t) {
+                    const h = this.homeXY();
+                    const R = 8 + 230 * m;      // wander radius grows with morph
+                    const dx = (p.noise(this.noiseA, t) - 0.5) * 2 * R;
+                    const dy = (p.noise(this.noiseB, t) - 0.5) * 2 * R;
+                    return {
+                        x: h.x + dx + this.fx,
+                        y: wrapY(h.y + dy + this.fy + scrollSmooth * this.parallax * m),
+                    };
+                }
+
+                update(t) {
                     this.breathe += 0.01;
-                    
-                    // Wrap
-                    let margin = this.size;
-                    if (this.x < -margin) this.x = p.width + margin;
-                    if (this.x > p.width + margin) this.x = -margin;
-                    if (this.baseY < -margin) this.baseY = p.height + margin;
-                    if (this.baseY > p.height + margin) this.baseY = -margin;
+                    // Mouse repulsion — only once the system is alive
+                    if (m > 0.05) {
+                        const { x, y } = this.pos(t);
+                        const dx = x - mouse.x, dy = y - mouse.y;
+                        const d = Math.hypot(dx, dy);
+                        if (d < 160 && d > 0) {
+                            const f = ((160 - d) / 160) * 2.2 * m;
+                            this.fx += (dx / d) * f;
+                            this.fy += (dy / d) * f;
+                        }
+                    }
+                    this.fx *= 0.94;
+                    this.fy *= 0.94;
                 }
-                
-                getY() {
-                    return this.baseY + scrollY * this.parallax;
-                }
-                
-                draw() {
-                    let breath = p.sin(this.breathe) * 0.03 + 1;
-                    let alpha = this.layer === 0 ? 0.5 : (this.layer === 1 ? 0.7 : 0.9);
-                    let y = this.getY();
-                    
+
+                draw(t) {
+                    const { x, y } = this.pos(t);
+                    const col = lerp3(COOL, this.color, m);
+                    const breath = 1 + Math.sin(this.breathe) * 0.03 * m;
+                    const rot = this.rotSeed * m + this.rotSpeed * p.frameCount * m;
+                    // superellipse exponent: 7 = rounded square (pad), 2 = circle
+                    const n = 7 - 5 * m;
+
                     p.push();
-                    p.translate(this.x, y);
-                    p.rotate(this.rotation);
-                    
-                    // Outer glow
+                    p.translate(x, y);
+                    p.rotate(rot);
+
+                    // glow grows as the particle comes alive
                     p.noStroke();
-                    p.fill(this.color[0], this.color[1], this.color[2], 8 * alpha);
-                    this.drawBlob(this.size * 1.4 * breath);
-                    
-                    // Main body
-                    p.fill(this.color[0], this.color[1], this.color[2], 50 * alpha);
-                    this.drawBlob(this.size * breath);
-                    
-                    // Inner highlight
-                    p.fill(this.color[0] + 20, this.color[1] + 20, this.color[2] + 20, 25 * alpha);
-                    this.drawBlob(this.size * 0.5 * breath);
-                    
+                    p.fill(col[0], col[1], col[2], 6 + 6 * m);
+                    this.shape(this.size * (1.15 + 0.35 * m) * breath, n, t);
+
+                    p.fill(col[0], col[1], col[2], 38 + 18 * m);
+                    this.shape(this.size * breath, n, t);
+
+                    p.fill(col[0] + 25, col[1] + 25, col[2] + 25, 20 + 10 * m);
+                    this.shape(this.size * 0.5 * breath, n, t);
+
                     p.pop();
                 }
-                
-                drawBlob(size) {
+
+                shape(size, n, t) {
                     p.beginShape();
-                    for (let i = 0; i <= this.points; i++) {
-                        let angle = (i / this.points) * p.TWO_PI;
-                        let idx = i % this.points;
-                        let r = size * this.radii[idx] * 0.5;
-                        r *= 0.9 + p.noise(this.noiseOff + i, p.frameCount * 0.005) * 0.2;
-                        p.curveVertex(p.cos(angle) * r, p.sin(angle) * r);
+                    for (let i = 0; i < this.points; i++) {
+                        const ang = (i / this.points) * p.TWO_PI;
+                        const c = Math.cos(ang), s = Math.sin(ang);
+                        // superellipse radius
+                        let r = Math.pow(
+                            Math.pow(Math.abs(c), n) + Math.pow(Math.abs(s), n),
+                            -1 / n
+                        );
+                        // organic lobes + live wobble, revealed with m
+                        const lobe = 1 + (this.radii[i] - 1) * m;
+                        const wob = 1 + (p.noise(this.noiseA + i * 0.35, t * 2.5) - 0.5) * 0.3 * m;
+                        r *= lobe * wob * size * 0.5;
+                        p.vertex(c * r, s * r);
                     }
                     p.endShape(p.CLOSE);
                 }
             }
 
-            // Small vesicles
+            // Thin-walled vesicles — only exist in the organic phase
             class Vesicle {
                 constructor() {
-                    this.parallax = p.random(0.25, 0.45);
-                    this.reset();
-                }
-                
-                reset() {
                     this.x = p.random(p.width);
-                    this.baseY = p.random(p.height);
-                    this.size = p.random(15, 35);
+                    this.y = p.random(p.height);
+                    this.size = p.random(16, 36);
                     this.noiseOff = p.random(1000);
-                    this.alpha = p.random(15, 35);
+                    this.alpha = p.random(16, 34);
+                    this.parallax = p.random(0.2, 0.45);
                 }
-                
-                update() {
-                    let nx = p.noise(this.noiseOff, p.frameCount * 0.001) - 0.5;
-                    let ny = p.noise(this.noiseOff + 500, p.frameCount * 0.001) - 0.5;
-                    this.x += nx * 0.3;
-                    this.baseY += ny * 0.3;
-                    
-                    if (this.x < -20) this.x = p.width + 20;
-                    if (this.x > p.width + 20) this.x = -20;
-                    if (this.baseY < -20) this.baseY = p.height + 20;
-                    if (this.baseY > p.height + 20) this.baseY = -20;
-                }
-                
-                getY() {
-                    return this.baseY + scrollY * this.parallax;
-                }
-                
-                draw() {
-                    let y = this.getY();
+                draw(t) {
+                    const a = this.alpha * m;
+                    if (a < 1) return;
+                    const x = this.x + (p.noise(this.noiseOff, t) - 0.5) * 120 * m;
+                    const y = wrapY(this.y + (p.noise(this.noiseOff + 500, t) - 0.5) * 120 * m
+                        + scrollSmooth * this.parallax * m);
                     p.noFill();
-                    p.stroke(PALETTE.nucleus[0], PALETTE.nucleus[1], PALETTE.nucleus[2], this.alpha * 0.5);
+                    p.stroke(NUCLEUS[0], NUCLEUS[1], NUCLEUS[2], a * 0.5);
                     p.strokeWeight(3);
-                    p.ellipse(this.x, y, this.size);
-                    p.stroke(PALETTE.nucleus[0], PALETTE.nucleus[1], PALETTE.nucleus[2], this.alpha);
+                    p.ellipse(x, y, this.size);
+                    p.stroke(NUCLEUS[0], NUCLEUS[1], NUCLEUS[2], a);
                     p.strokeWeight(1);
-                    p.ellipse(this.x, y, this.size);
+                    p.ellipse(x, y, this.size);
                 }
             }
 
-            // Tiny ribosomes
-            class Ribosome {
+            // Tiny motes: electrons on the lattice, ribosomes in the cell
+            class Mote {
                 constructor() {
-                    this.parallax = p.random(0.4, 0.6);
-                    this.reset();
-                }
-                
-                reset() {
                     this.x = p.random(p.width);
-                    this.baseY = p.random(p.height);
+                    this.y = p.random(p.height);
                     this.size = p.random(1.5, 3);
                     this.noiseOff = p.random(1000);
-                    this.alpha = p.random(30, 60);
+                    this.alpha = p.random(28, 55);
+                    this.parallax = p.random(0.3, 0.6);
                 }
-                
-                update() {
-                    let nx = p.noise(this.noiseOff, p.frameCount * 0.002) - 0.5;
-                    let ny = p.noise(this.noiseOff + 500, p.frameCount * 0.002) - 0.5;
-                    this.x += nx * 0.2;
-                    this.baseY += ny * 0.2;
-                    
-                    if (this.x < -5) this.x = p.width + 5;
-                    if (this.x > p.width + 5) this.x = -5;
-                    if (this.baseY < -5) this.baseY = p.height + 5;
-                    if (this.baseY > p.height + 5) this.baseY = -5;
-                }
-                
-                getY() {
-                    return this.baseY + scrollY * this.parallax;
-                }
-                
-                draw() {
+                draw(t) {
+                    const x = this.x + (p.noise(this.noiseOff, t) - 0.5) * 80;
+                    const y = wrapY(this.y + (p.noise(this.noiseOff + 500, t) - 0.5) * 80
+                        + scrollSmooth * this.parallax * m);
+                    const col = lerp3(COOL, [138, 122, 154], m);
                     p.noStroke();
-                    p.fill(138, 122, 154, this.alpha);
-                    p.ellipse(this.x, this.getY(), this.size);
+                    p.fill(col[0], col[1], col[2], this.alpha);
+                    p.ellipse(x, y, this.size);
                 }
+            }
+
+            // The nucleus condenses out of nothing as the phase turns organic
+            class Nucleus {
+                constructor() {
+                    this.noiseOff = p.random(1000);
+                    this.breathe = 0;
+                    this.points = 16;
+                    this.radii = [];
+                    for (let i = 0; i < this.points; i++) this.radii.push(p.random(0.92, 1.08));
+                    this.resize();
+                }
+                resize() {
+                    this.x = p.width * 0.7;
+                    this.y = p.height * 0.45;
+                    this.size = p.constrain(Math.min(p.width, p.height) * 0.6, 300, 700);
+                }
+                draw(t) {
+                    if (m < 0.12) return;
+                    const vis = (m - 0.12) / 0.88;
+                    this.breathe += 0.003;
+                    const size = this.size * (1 + Math.sin(this.breathe) * 0.01) * (0.85 + 0.15 * vis);
+                    p.push();
+                    p.translate(this.x, this.y + Math.min(scrollSmooth * 0.08, p.height * 0.2));
+                    for (let i = 4; i > 0; i--) {
+                        p.noStroke();
+                        p.fill(NUCLEUS[0], NUCLEUS[1], NUCLEUS[2], p.map(i, 4, 0, 3, 12) * vis);
+                        this.shape(size * (0.7 + i * 0.08), t);
+                    }
+                    p.noFill();
+                    p.stroke(NUCLEUS[0], NUCLEUS[1], NUCLEUS[2], 12 * vis);
+                    p.strokeWeight(2);
+                    this.shape(size, t);
+                    p.stroke(NUCLEUS[0], NUCLEUS[1], NUCLEUS[2], 6 * vis);
+                    p.strokeWeight(8);
+                    this.shape(size * 1.02, t);
+                    p.pop();
+                }
+                shape(size, t) {
+                    p.beginShape();
+                    for (let i = 0; i <= this.points; i++) {
+                        const ang = (i / this.points) * p.TWO_PI;
+                        const idx = i % this.points;
+                        let r = size * 0.5 * this.radii[idx];
+                        r *= 0.97 + p.noise(this.noiseOff + i * 0.3, t) * 0.06;
+                        p.curveVertex(Math.cos(ang) * r, Math.sin(ang) * r * 0.85);
+                    }
+                    p.endShape(p.CLOSE);
+                }
+            }
+
+            function buildWorld() {
+                particles = [];
+                vesicles = [];
+                motes = [];
+                pads = [];
+
+                const cols = Math.ceil(p.width / GRID);
+                const rows = Math.ceil(p.height / GRID);
+
+                // choose distinct lattice cells for the main particles
+                const cells = [];
+                for (let gx = 0; gx < cols; gx++)
+                    for (let gy = 0; gy < rows; gy++) cells.push([gx, gy]);
+                for (let i = cells.length - 1; i > 0; i--) {
+                    const j = p.floor(p.random(i + 1));
+                    [cells[i], cells[j]] = [cells[j], cells[i]];
+                }
+                const count = p.constrain(Math.floor((p.width * p.height) / 70000), 8, 24);
+                for (let i = 0; i < Math.min(count, cells.length); i++) {
+                    particles.push(new Particle(cells[i][0], cells[i][1]));
+                }
+
+                // small pads on some remaining lattice points (silicon texture)
+                for (let i = count; i < cells.length; i++) {
+                    if (p.random() < 0.3) {
+                        pads.push({
+                            x: cells[i][0] * GRID + GRID * 0.5,
+                            y: cells[i][1] * GRID + GRID * 0.5,
+                            s: p.random(2.5, 5),
+                        });
+                    }
+                }
+
+                const nVes = p.constrain(Math.floor((p.width * p.height) / 220000), 3, 8);
+                for (let i = 0; i < nVes; i++) vesicles.push(new Vesicle());
+
+                const nMotes = p.constrain(Math.floor((p.width * p.height) / 30000), 18, 70);
+                for (let i = 0; i < nMotes; i++) motes.push(new Mote());
+
+                nucleus = new Nucleus();
             }
 
             p.setup = () => {
-                let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
-                canvas.parent('cellular-canvas');
-                
-                nucleus = new Nucleus();
-                
-                // Create proteins in layers
-                let numProteins = p.constrain(Math.floor((p.width * p.height) / 80000), 6, 20);
-                for (let i = 0; i < numProteins; i++) {
-                    proteins.push(new Protein(i % 3));
-                }
-                
-                // Create vesicles
-                let numVesicles = p.constrain(Math.floor((p.width * p.height) / 200000), 3, 8);
-                for (let i = 0; i < numVesicles; i++) {
-                    vesicles.push(new Vesicle());
-                }
-                
-                // Create ribosomes
-                let numRibosomes = p.constrain(Math.floor((p.width * p.height) / 25000), 20, 80);
-                for (let i = 0; i < numRibosomes; i++) {
-                    ribosomes.push(new Ribosome());
+                const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                canvas.parent('phase-canvas');
+                p.pixelDensity(Math.min(2, window.devicePixelRatio || 1));
+                buildWorld();
+
+                if (reduceMotion) {
+                    p.noLoop();
+                    // keep the morph correct on scroll, but render static frames only
+                    let pending = false;
+                    window.addEventListener('scroll', () => {
+                        if (pending) return;
+                        pending = true;
+                        requestAnimationFrame(() => { pending = false; p.redraw(); });
+                    }, { passive: true });
                 }
             };
-            
+
             p.draw = () => {
-                targetScrollY = window.pageYOffset;
-                scrollY += (targetScrollY - scrollY) * 0.1;
-                
-                p.background(13, 12, 10);
-                
-                // Subtle vignette
-                let gradient = p.drawingContext.createRadialGradient(
+                const t = reduceMotion ? 0 : p.frameCount * 0.004;
+
+                if (reduceMotion) {
+                    m = targetMorph();
+                    scrollSmooth = window.pageYOffset;
+                } else {
+                    m += (targetMorph() - m) * 0.06;
+                    scrollSmooth += (window.pageYOffset - scrollSmooth) * 0.1;
+                }
+
+                p.clear();
+
+                // Silicon texture: hairline lattice + pads, dissolving as m rises
+                const latticeAlpha = 14 * (1 - m);
+                if (latticeAlpha > 0.6) {
+                    p.stroke(COOL[0], COOL[1], COOL[2], latticeAlpha);
+                    p.strokeWeight(1);
+                    for (let x = GRID * 0.5; x < p.width; x += GRID) p.line(x, 0, x, p.height);
+                    for (let y = GRID * 0.5; y < p.height; y += GRID) p.line(0, y, p.width, y);
+
+                    p.noStroke();
+                    p.fill(COOL[0], COOL[1], COOL[2], latticeAlpha * 3);
+                    for (const pad of pads) p.rect(pad.x - pad.s / 2, pad.y - pad.s / 2, pad.s, pad.s);
+                }
+
+                nucleus.draw(t);
+                for (const v of vesicles) v.draw(t);
+                for (const pt of particles) { pt.update(t); pt.draw(t); }
+                for (const mt of motes) mt.draw(t);
+
+                // vignette
+                const g = p.drawingContext.createRadialGradient(
                     p.width / 2, p.height / 2, 0,
                     p.width / 2, p.height / 2, p.width * 0.8
                 );
-                gradient.addColorStop(0, 'rgba(15, 14, 12, 0)');
-                gradient.addColorStop(1, 'rgba(5, 4, 3, 0.5)');
-                p.drawingContext.fillStyle = gradient;
+                g.addColorStop(0, 'rgba(8, 8, 8, 0)');
+                g.addColorStop(1, 'rgba(4, 4, 4, 0.45)');
+                p.drawingContext.fillStyle = g;
                 p.drawingContext.fillRect(0, 0, p.width, p.height);
-                
-                // Draw nucleus (far back)
-                nucleus.update();
-                nucleus.draw();
-                
-                // Draw vesicles
-                for (let v of vesicles) {
-                    v.update();
-                    v.draw();
-                }
-                
-                // Draw proteins sorted by layer
-                let sortedProteins = [...proteins].sort((a, b) => a.layer - b.layer);
-                for (let protein of sortedProteins) {
-                    protein.update();
-                    protein.draw();
-                }
-                
-                // Draw ribosomes (front)
-                for (let r of ribosomes) {
-                    r.update();
-                    r.draw();
-                }
             };
-            
-            p.mouseMoved = () => {
-                mouse.x = p.mouseX;
-                mouse.y = p.mouseY;
-            };
-            
+
+            p.mouseMoved = () => { mouse.x = p.mouseX; mouse.y = p.mouseY; };
+
             p.windowResized = () => {
                 p.resizeCanvas(p.windowWidth, p.windowHeight);
-                nucleus.resize();
+                buildWorld();
+                if (reduceMotion) p.redraw();
             };
         };
-        
+
         new p5(sketch);
     </script>
 </body>

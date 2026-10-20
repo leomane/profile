@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Le Chatelier's Principle - Interactive Chemistry</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <title>Le Chatelier's Principle | Tony Leo</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d1a65c' stroke-width='7'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%238fb7cc'/%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js" integrity="sha384-Mhzoc5EVkjFUVtIW2M3h8BgXtFlUsUpu9lTCThPrV7+k6MN6vTi079rew0LkvgFb" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d0c0a;
-            --bg-elevated: #1a1816;
-            --bg-card: #141311;
-            --text: #e8e4dc;
-            --text-dim: #6a6560;
-            --text-muted: #4a4845;
-            --border: #2a2825;
-            --accent: #c4a35a;
+            --bg: #15100a;
+            --bg-elevated: #211a11;
+            --bg-card: #1b1510;
+            --text: #eae6dc;
+            --text-dim: #9a9280;
+            --text-muted: #7d7568;
+            --border: #302822;
+            --accent: #d1a65c;
             --teal: #5a8a87;
             --coral: #b87a6a;
             --lavender: #8a7a9a;
@@ -171,12 +172,12 @@
         }
 
         .sidebar h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 22px;
-            font-weight: 600;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 24px;
+            font-weight: 480;
             color: var(--text);
             margin-bottom: 8px;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.015em;
         }
 
         .sidebar .subtitle {
@@ -190,7 +191,7 @@
             background: var(--bg);
             padding: 14px;
             border-radius: 8px;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 13px;
             border: 1px solid var(--border);
             text-align: center;
@@ -276,7 +277,7 @@
         }
 
         .particle-count-item .particle-label {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 500;
             font-size: 10px;
             text-transform: uppercase;
@@ -294,7 +295,7 @@
         .particle-count-item .particle-number {
             font-size: 22px;
             font-weight: 700;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
         }
 
         .particle-count-item.reactant .particle-number {
@@ -328,7 +329,7 @@
         }
 
         .molecule-breakdown .molecule-count-chip .mol-count {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 700;
             font-size: 13px;
         }
@@ -419,7 +420,7 @@
         }
 
         .molecule-count {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 12px;
             color: var(--text-dim);
             min-width: 24px;
@@ -539,7 +540,7 @@
         }
 
         .value-display {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 11px;
             color: var(--text-dim);
             min-width: 50px;
@@ -654,7 +655,7 @@
             background: var(--bg);
             padding: 14px;
             border-radius: 8px;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 12px;
             border: 1px solid var(--border);
             line-height: 1.8;
@@ -693,7 +694,7 @@
         }
 
         .eq-constants h4 {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 10px;
             font-weight: 700;
             color: var(--text-dim);
@@ -749,7 +750,7 @@
         }
 
         .thermo-indicator .delta-h {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 600;
         }
 
@@ -770,7 +771,7 @@
 
         .vp-label {
             display: block;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 9px;
             color: var(--text-dim);
             text-transform: uppercase;
@@ -780,7 +781,7 @@
 
         .vp-value {
             display: block;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 16px;
             font-weight: 600;
             color: var(--text);
@@ -817,7 +818,7 @@
         }
 
         .q-k-label {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 11px;
             font-weight: 600;
             color: var(--text-dim);
@@ -825,7 +826,7 @@
         }
 
         .q-k-value {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 18px;
             font-weight: 700;
             color: var(--text);
@@ -883,7 +884,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 13px;
             padding: 8px;
             background: var(--bg);
@@ -903,7 +904,7 @@
         }
 
         .kp-relation {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 11px;
             color: var(--text-dim);
             padding: 6px 8px;
@@ -926,7 +927,7 @@
         }
 
         .q-k-raw-values span {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
         }
 
         .vant-hoff-info {
@@ -942,7 +943,7 @@
         }
 
         .vant-hoff-info .formula {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 9px;
             color: var(--lavender);
         }
@@ -1232,7 +1233,7 @@
     </style>
 </head>
 <body>
-    <a href="index.html" style="position: fixed; top: 20px; right: 20px; z-index: 1000; font-family: 'Space Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); text-decoration: none; padding: 8px 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 6px; transition: all 0.3s ease;">← Back to Portfolio</a>
+    <a href="index.html" style="position: fixed; top: 20px; right: 20px; z-index: 1000; font-size: 0.78rem; letter-spacing: 0.08em; color: var(--text-dim); text-decoration: none; padding: 8px 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 6px; transition: all 0.3s ease;">← Tony Leo</a>
     <div class="container">
         <div class="sidebar">
             <div class="sidebar-header">

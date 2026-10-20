@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Murmuration Flow | Tony Leo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,10 85,30 85,70 50,90 15,70 15,30' fill='none' stroke='%23d1a65c' stroke-width='7'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%238fb7cc'/%3E%3C/svg%3E">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d0c0a;
-            --text: #e8e4dc;
-            --text-dim: #4a4845;
-            --accent: #c4a35a;
+            --bg: #15100a;
+            --text: #eae6dc;
+            --text-dim: #9a9280;
+            --accent: #d1a65c;
             --teal: #5a8a87;
             --coral: #b87a6a;
             --lavender: #8a7a9a;
@@ -30,43 +31,7 @@
             background: var(--bg);
             color: var(--text);
             overflow-x: hidden;
-            cursor: none;
             min-height: 100vh;
-        }
-
-        /* Custom cursor */
-        .cursor {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            border: 1px solid var(--text);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease, border-color 0.3s ease, background 0.3s ease;
-            mix-blend-mode: difference;
-        }
-
-        .cursor.expanded {
-            width: 60px;
-            height: 60px;
-            border-color: var(--accent);
-            background: rgba(196, 163, 90, 0.1);
-        }
-
-        .cursor-dot {
-            position: fixed;
-            width: 4px;
-            height: 4px;
-            background: var(--text);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: background 0.3s ease;
-        }
-
-        .cursor-dot.expanded {
-            background: var(--accent);
         }
 
         .container {
@@ -89,15 +54,16 @@
         }
 
         .header h1 {
+            font-family: 'Fraunces', Georgia, serif;
             font-size: clamp(2rem, 5vw, 3rem);
-            font-weight: 300;
-            letter-spacing: -0.02em;
+            font-weight: 380;
+            letter-spacing: -0.015em;
             color: var(--text);
             margin-bottom: 0.5rem;
         }
 
         .header .subtitle {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -112,7 +78,7 @@
 
         /* Controls Panel */
         .controls-panel {
-            background: rgba(13, 12, 10, 0.8);
+            background: rgba(21, 16, 10, 0.8);
             backdrop-filter: blur(10px);
             padding: 2rem;
             border: 1px solid rgba(90, 138, 135, 0.1);
@@ -141,7 +107,7 @@
         }
 
         .control-section h3 {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             font-weight: 400;
             letter-spacing: 0.2em;
@@ -157,7 +123,7 @@
             width: 100%;
             background: rgba(90, 138, 135, 0.05);
             padding: 0.75rem;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.875rem;
             margin-bottom: 0.75rem;
             border: 1px solid rgba(90, 138, 135, 0.2);
@@ -234,7 +200,7 @@
         }
 
         .value-display {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.7rem;
             color: var(--text-dim);
             min-width: 50px;
@@ -270,7 +236,7 @@
         }
 
         .color-value {
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             color: var(--text-dim);
         }
@@ -281,7 +247,7 @@
             color: var(--text);
             border: 1px solid rgba(90, 138, 135, 0.3);
             padding: 0.75rem 1rem;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.65rem;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -370,7 +336,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Space Mono', monospace;
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 0.75rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -387,10 +353,8 @@
             position: fixed;
             top: 2rem;
             right: 2rem;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
             color: var(--text-dim);
             text-decoration: none;
             transition: color 0.3s ease;
@@ -428,10 +392,7 @@
     </style>
 </head>
 <body>
-    <div class="cursor"></div>
-    <div class="cursor-dot"></div>
-
-    <a href="index.html" class="back-link">Back to Portfolio</a>
+    <a href="index.html" class="back-link">Tony Leo</a>
 
     <div class="container">
         <header class="header">
@@ -550,46 +511,6 @@
 
     <script>
         // ═══════════════════════════════════════════════════════════════════════
-        // CUSTOM CURSOR (matching portfolio)
-        // ═══════════════════════════════════════════════════════════════════════
-
-        const cursor = document.querySelector('.cursor');
-        const cursorDot = document.querySelector('.cursor-dot');
-        let mouseX = 0, mouseY = 0;
-        let cursorX = 0, cursorY = 0;
-
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        function animateCursor() {
-            cursorX += (mouseX - cursorX) * 0.15;
-            cursorY += (mouseY - cursorY) * 0.15;
-            
-            cursor.style.left = cursorX - 10 + 'px';
-            cursor.style.top = cursorY - 10 + 'px';
-            cursorDot.style.left = mouseX - 2 + 'px';
-            cursorDot.style.top = mouseY - 2 + 'px';
-            
-            requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
-
-        // Expand cursor on interactive elements
-        const interactiveElements = document.querySelectorAll('button, input, a, .button');
-        interactiveElements.forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                cursor.classList.add('expanded');
-                cursorDot.classList.add('expanded');
-            });
-            el.addEventListener('mouseleave', () => {
-                cursor.classList.remove('expanded');
-                cursorDot.classList.remove('expanded');
-            });
-        });
-
-        // ═══════════════════════════════════════════════════════════════════════
         // MURMURATION PARAMETERS
         // ═══════════════════════════════════════════════════════════════════════
 
@@ -660,7 +581,7 @@
                 });
             }
             
-            background(13, 12, 10);
+            background(21, 16, 10);
         }
 
         function draw() {
