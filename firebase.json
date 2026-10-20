@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "leo-profile-page",
     "public": ".",
     "ignore": [
       "firebase.json",
